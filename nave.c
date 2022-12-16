@@ -18,6 +18,7 @@ double coordinates[2];
 bool empty = true;
 
 int main (){
+    int datogliere;
     srand(getpid());
     int mem_id, sem_id;
     struct shared_data * sh_mem;
