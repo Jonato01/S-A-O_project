@@ -3,6 +3,7 @@
 # Log file
 #*.o
 *.o
+#coming soon
 #-o file
 # BlueJ files
 *.ctxt
