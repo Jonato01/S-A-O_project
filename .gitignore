@@ -1,7 +1,7 @@
 # compiled c file
 *.out
 # Log file
-#*.log
+#*.o
 *.o
 #-o file
 # BlueJ files
