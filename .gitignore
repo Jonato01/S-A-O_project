@@ -1,8 +1,9 @@
 # compiled c file
 *.out
 # Log file
-*.log
-
+#*.log
+*.o
+#-o file
 # BlueJ files
 *.ctxt
 # Package Files #
