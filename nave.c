@@ -18,22 +18,20 @@ double coordinates[2];
 bool empty = true;
 
 int main (){
-    int datogliere;
     srand(getpid());
     int mem_id, sem_id;
     struct shared_data * sh_mem;
     struct sembuf sops;
     
-    double map_size;
-    sem_id=semget(getpid()+1,sizeof(sops),0660 | IPC_CREAT);
+    sem_id=semget(getppid()+1,sizeof(sops),0600);
     mem_id = shmget(getppid(), 3, 0600);
     sh_mem = shmat(mem_id, NULL, 0);
     //TEST ERROR
-    LOCK
+    // LOCK
     double map__size = sh_mem->map_size;
-    UNLOCK
-   
-    shmdt ( sh_mem );
-    shmctl ( mem_id , IPC_RMID , NULL );
-     exit(map__size);
+    // UNLOCK
+    coordinates[0] = rand() % (int)map__size + 1;
+    coordinates[1] = rand() % (int)map__size + 1;
+    printf("Creata nave in posizione %lf, %lf\n", coordinates[0], coordinates[1]);
+    exit(0);
 }

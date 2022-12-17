@@ -40,19 +40,22 @@ int main(int args,char* argv[]){
     sem_id = semget(getpid()+1,3,0660 | IPC_CREAT);
     mem_id = shmget (getpid(), sizeof(*sh_mem), 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id, NULL, 0);
-    char * v[]={"./nave","ciao",NULL};
-    if(!fork())
-    execve(v[0],v,NULL);
-    else{
-    sleep(2);
-    double c;
-    int i=0;
-  
-      
+    
+    printf("Creata shm con id: %d\nCreato semaforo con id:%d\n", mem_id, sem_id);
+    //LOCK
+    printf("1\n");
     sh_mem->cur_idx=0;
     sh_mem->map_size = SO_SIZE;
+    printf("MASTER: la mappa è grande %lf\n", sh_mem->map_size);
     sh_mem->j= 100;
- printf("%lf",sh_mem->map_size); 
-    shmdt ( sh_mem );
-    shmctl ( mem_id , IPC_RMID , NULL );
-}}
+    //UNLOCK
+
+    char * v[]={"./nave",NULL};
+    if(!fork())
+        execve(v[0],v,NULL);
+    else{
+        sleep(2);
+        shmdt ( sh_mem );
+        shmctl ( mem_id , IPC_RMID , NULL );
+    }
+}
