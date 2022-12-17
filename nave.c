@@ -17,21 +17,24 @@
 double coordinates[2];
 bool empty = true;
 
-int main (){
+int main (int argc, char * argv[]){
+    int nave_id = atoi(argv[1]);
     srand(getpid());
     int mem_id, sem_id;
     struct shared_data * sh_mem;
     struct sembuf sops;
     
-    sem_id=semget(getppid()+1,sizeof(sops),0600);
-    mem_id = shmget(getppid(), 3, 0600);
+    sem_id = semget(getppid()+1,sizeof(sops),0600 | IPC_CREAT);
+    mem_id = shmget(getppid(), NUM_SEMS, 0600);
     sh_mem = shmat(mem_id, NULL, 0);
     //TEST ERROR
-    // LOCK
+
+    LOCK
     double map__size = sh_mem->map_size;
-    // UNLOCK
+    UNLOCK
+
     coordinates[0] = rand() % (int)map__size + 1;
     coordinates[1] = rand() % (int)map__size + 1;
-    printf("Creata nave in posizione %lf, %lf\n", coordinates[0], coordinates[1]);
+    printf("Creata nave n. %d in posizione %lf, %lf\n", nave_id, coordinates[0], coordinates[1]);
     exit(0);
 }
