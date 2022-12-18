@@ -1,7 +1,9 @@
 
 #ifndef SHM_H
 #define SHM_H  
-#define NUM_SEMS 2
+#define NUM_SEMS 1
+//0:    protezione shm
+//1:    aspetta che termino tutti i processi
 #define LOCK                    \
     sops.sem_num = 1;            \
     sops.sem_op = -1;            \
