@@ -14,27 +14,24 @@
 #define SO_SPEED 30
 #define SO_CAPACITY 300
 
-double coordinates[2];
+struct coordinates coor;
 bool empty = true;
+int nave_id;
 
 int main (int argc, char * argv[]){
-    int nave_id = atoi(argv[1]);
+    nave_id = atoi(argv[1]);
     srand(getpid());
     int mem_id, sem_id;
     struct shared_data * sh_mem;
     struct sembuf sops;
     
-    sem_id = semget(getppid()+1,sizeof(sops),0600 | IPC_CREAT);
-    mem_id = shmget(getppid(), NUM_SEMS, 0600);
+    sem_id = semget(getppid()+1, NUM_SEMS, 0600 | IPC_CREAT);
+    mem_id = shmget(getppid(), sizeof(*sh_mem), 0600 | IPC_CREAT);
     sh_mem = shmat(mem_id, NULL, 0);
     //TEST ERROR
 
-    LOCK
-    double map__size = sh_mem->map_size;
-    UNLOCK
-
-    coordinates[0] = rand() % (int)map__size + 1;
-    coordinates[1] = rand() % (int)map__size + 1;
-    printf("Creata nave n. %d in posizione %lf, %lf\n", nave_id, coordinates[0], coordinates[1]);
+    coor.x = rand() % (int)(SO_LATO + 1);
+    coor.y = rand() % (int)(SO_LATO + 1);
+    printf("Creata nave n. %d in posizione %lf, %lf\n", nave_id, coor.x, coor.y);
     exit(0);
 }
