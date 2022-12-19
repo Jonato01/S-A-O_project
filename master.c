@@ -67,10 +67,11 @@ void genmerci(struct merce *merc)
 }
 int main(int args,char* argv[]){
     int mem_id;
+    int i;
     int sem_id; 
     struct shared_data * sh_mem;
     struct sembuf sops;
-    
+    srand(getpid());
     struct merce *merc;
     /*creazione IPC obj*/
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
@@ -80,6 +81,17 @@ int main(int args,char* argv[]){
     sh_mem = shmat(mem_id, NULL, 0);    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n", mem_id, sem_id);
     
+    /*creazione merci*/
+    LOCK
+    for(i=0;i<SO_MERCI;i++)
+    {
+        sh_mem-> merci[i].id=i;
+        sh_mem-> merci[i].size=rand()%(int)%SO_SIZE+1;
+        sh_mem-> merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
+        sh_mem-> merci[i].num=0;
+    }
+    UNLOCK
+
     genporti();
     
     

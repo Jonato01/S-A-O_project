@@ -37,11 +37,13 @@ struct coordinates{
 
 struct shared_data {
     struct coordinates all_ports[SO_PORTI];
+    struct merce merci[SO_MERCI];
 };
 
 struct merce {
     int id;
     int size;
     int vita;
+    int num;
 };
 #endif
