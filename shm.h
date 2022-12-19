@@ -1,10 +1,21 @@
 
 #ifndef SHM_H
 #define SHM_H  
-#define NUM_SEMS 1
+#define _GNU_SOURCE
+#define NUM_SEMS 2
 #define SO_PORTI 6
 #define SO_LATO 100.00 
-
+#define SO_NAVI 20
+#define SO_GIORNI 30
+#define NAVI_PATH_NAME "./nave"
+#define PORTI_PATH_NAME "./porto"
+#define SO_MERCI 5
+#define SO_SIZE 100 
+#define SO_MIN_VITA 2 
+#define S0_MAX_VITA 10
+#define SO_SPEED 30
+#define SO_CAPACITY 300
+#define SO_BANCHINE 4
 /*0:    protezione shm*/
 #define LOCK                    \
     sops.sem_num = 0;            \
@@ -17,14 +28,15 @@
     sops.sem_flg = 0;            \
     semop(sem_id, &sops, 1);
 
+
+
 struct coordinates{
     double x;
     double y;
 };
 
 struct shared_data {
-    int o;
-    struct coordinates * all_ports;
+    struct coordinates all_ports[SO_PORTI];
 };
 
 struct merce {

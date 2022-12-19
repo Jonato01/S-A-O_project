@@ -13,14 +13,7 @@
 #include <sys/wait.h>
 
 #define _GNU_SOURCE
-#define SO_NAVI 20
-#define SO_GIORNI 30
-#define NAVI_PATH_NAME "./nave"
-#define PORTI_PATH_NAME "./porto"
-#define SO_MERCI 5
-#define SO_SIZE 100 
-#define SO_MIN_VITA 2 
-#define S0_MAX_VITA 10
+
 /*Dimensioni della mappa in km*/
 void resetSems(int sem_id);
 void genmerci(struct merce *merc);
@@ -28,7 +21,7 @@ void genporti();
 void gennavi();
 void resetSems(int sem_id){
     int i;
-    for(i = 0; i < NUM_SEMS; i++){
+    for(i = 1; i < NUM_SEMS; i++){
         semctl(sem_id, i, SETVAL, 1);
     }
 }
@@ -80,19 +73,22 @@ int main(int args,char* argv[]){
     
     struct merce *merc;
     /*creazione IPC obj*/
-    sem_id = semget(getpid()+(pid_t)1,NUM_SEMS,0600 | IPC_CREAT);
+    sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
     mem_id = shmget (getpid(), sizeof(*sh_mem), 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id, NULL, 0);    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n", mem_id, sem_id);
-
-    LOCK
-        sh_mem->all_ports = calloc(SO_PORTI, sizeof(*(sh_mem->all_ports)));
-    UNLOCK
-    gennavi();
+    
     genporti();
     
+    
+    sops.sem_num=1;
+    sops.sem_op=-SO_PORTI;
+    semop(sem_id,&sops,1);
+    gennavi();
+    
+    while(wait(NULL)!=-1);
     shmdt ( sh_mem );
     printf("Deleting smh with id %d\n", mem_id);
     shmctl(mem_id , IPC_RMID , NULL);

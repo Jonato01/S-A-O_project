@@ -11,7 +11,7 @@
 
 #include "shm.h"
 
-#define SO_BANCHINE 4
+
 
 struct coordinates coor;
 int porto_id;
@@ -21,14 +21,14 @@ void creaPorto(){
 }
 
 int main(int argc, char * argv[]){
-    srand(getpid());
-    porto_id = atoi(argv[1]);
-
+    
     int mem_id;
     int sem_id;
     struct shared_data * sh_mem;
     struct sembuf sops;
-    
+    srand(getpid());
+    porto_id = atoi(argv[1]);
+
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
     sh_mem = shmat(mem_id, NULL, 0);
@@ -63,5 +63,8 @@ int main(int argc, char * argv[]){
     UNLOCK
 
     printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
+    sops.sem_num=1;
+    sops.sem_op=1;
+    semop(sem_id,&sops,1);
     exit(0);
 }
