@@ -11,27 +11,28 @@
 
 #include "shm.h"
 
-#define SO_BANCHINE 4
+
 
 struct coordinates coor;
 int porto_id;
 
 void creaPorto(){
-    //gestire caso in cui si provi a creare più porti nelle stesse coordinate
+    /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
 }
 
 int main(int argc, char * argv[]){
+    
+    int mem_id;
+    int sem_id;
+    struct shared_data * sh_mem;
+    struct sembuf sops;
     srand(getpid());
     porto_id = atoi(argv[1]);
 
-    int mem_id, sem_id;
-    struct shared_data * sh_mem;
-    struct sembuf sops;
-    
-    sem_id = semget(getppid()+1, NUM_SEMS, 0600 | IPC_CREAT);
-    mem_id = shmget(getppid(), sizeof(*sh_mem), 0600 | IPC_CREAT);
+    sem_id = semget(getppid()+1, NUM_SEMS, 0600);
+    mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
     sh_mem = shmat(mem_id, NULL, 0);
-    //TEST ERROR
+    /*TEST ERROR*/
 
     switch(porto_id){
         case 0:
@@ -57,10 +58,13 @@ int main(int argc, char * argv[]){
             break;
     }
     LOCK
-    //sh_mem->all_ports[porto_id].x = coor.x;
-    //sh_mem->all_ports[porto_id].y = coor.y;
+    sh_mem->all_ports[porto_id].x = coor.x;
+    sh_mem->all_ports[porto_id].y = coor.y;
     UNLOCK
 
-    printf("Creato il porto %d in posizione %lf, %lf\n", porto_id, coor.x, coor.y);
+    printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
+    sops.sem_num=1;
+    sops.sem_op=1;
+    semop(sem_id,&sops,1);
     exit(0);
 }
