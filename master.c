@@ -39,7 +39,7 @@ int main(int args,char* argv[]){
     printf("Creating shm with id: %d\nCreating sem with id:%d\n", mem_id, sem_id);
 
     LOCK
-    //sh_mem->all_ports = calloc(SO_PORTI, sizeof(sh_mem->all_ports));
+    sh_mem->all_ports = calloc(SO_PORTI, sizeof(*(sh_mem->all_ports)));
     UNLOCK
 
     for(int i = 0; i < SO_PORTI; i++){
