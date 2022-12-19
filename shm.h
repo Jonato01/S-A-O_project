@@ -5,7 +5,7 @@
 #define SO_PORTI 6
 #define SO_LATO 100.00 
 
-//0:    protezione shm
+/*0:    protezione shm*/
 #define LOCK                    \
     sops.sem_num = 0;            \
     sops.sem_op = -1;            \
@@ -27,7 +27,7 @@ struct shared_data {
     struct coordinates * all_ports;
 };
 
-struct merce{
+struct merce {
     int id;
     int size;
     int vita;
