@@ -17,21 +17,24 @@
 struct coordinates coor;
 bool empty = true;
 int nave_id;
-
+void gennave()
+{
+    coor.x = rand() % (int)(SO_LATO + 1);
+    coor.y = rand() % (int)(SO_LATO + 1);
+    printf("Creata nave n. %d in posizione %lf, %lf\n", nave_id, coor.x, coor.y);
+}
 int main (int argc, char * argv[]){
     nave_id = atoi(argv[1]);
     srand(getpid());
     int mem_id, sem_id;
     struct shared_data * sh_mem;
     struct sembuf sops;
-    
+    /* Ottengo l'accesso agli oggetti IPC */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 | IPC_CREAT);
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600 | IPC_CREAT);
     sh_mem = shmat(mem_id, NULL, 0);
-    //TEST ERROR
-
-    coor.x = rand() % (int)(SO_LATO + 1);
-    coor.y = rand() % (int)(SO_LATO + 1);
-    printf("Creata nave n. %d in posizione %lf, %lf\n", nave_id, coor.x, coor.y);
+    /*TEST ERROR*/
+    gennave();
+    
     exit(0);
 }
