@@ -12,24 +12,14 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 
-
 #define _GNU_SOURCE
 #define SO_NAVI 20
-#define SO_PORTI 5
 #define SO_GIORNI 30
 #define SO_MERCI 5
 #define SO_SIZE 100 
 #define SO_MIN_VITA 2 
 #define S0_MAX_VITA 10
-#define SO_LATO 100.00    //Dimensioni della mappa in km
-
- struct merce{
-    int id;
-    char* nome;
-    int lotti;
-    int size;
-    int vita;
-};
+//Dimensioni della mappa in km
 
 void resetSems(int sem_id){
     for(int i = 0; i < NUM_SEMS; i++){
@@ -41,19 +31,25 @@ int main(int args,char* argv[]){
     int mem_id, sem_id;
     struct shared_data * sh_mem;
     struct sembuf sops;
-    double map[SO_SIZE][SO_SIZE];
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
+    semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
     mem_id = shmget (getpid(), sizeof(*sh_mem), 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id, NULL, 0);    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n", mem_id, sem_id);
 
     LOCK
-    sh_mem->cur_idx=0;
-    sh_mem->map_size = SO_SIZE;
-    printf("MASTER: la mappa è grande %lf\n", sh_mem->map_size);
-    sh_mem->j= 100;
+    sh_mem->all_ports = calloc(SO_PORTI, sizeof(*(sh_mem->all_ports)));
     UNLOCK
+
+    for(int i = 0; i < SO_PORTI; i++){
+        if(!fork()){
+            char c[2];
+            sprintf(c, "%d", i);
+            char * v[] = {"./porto", c, NULL};
+            execve(v[0], v, NULL);
+        }
+    }
 
     for(int i = 0; i < SO_NAVI; i++){
         if(!fork()){
