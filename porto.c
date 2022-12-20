@@ -61,7 +61,7 @@ struct merce* genmerci()
             }}
     
         
-        printf("creata richiesta di merce %d a porto %d\n",merci[i].id,porto_id);
+        printf("creata merce %d a porto %d\n",merci[i].id,porto_id);
     }
     return merci;
 
