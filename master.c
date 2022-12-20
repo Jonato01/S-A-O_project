@@ -12,7 +12,6 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 
-#define _GNU_SOURCE
 
 /*Dimensioni della mappa in km*/
 void resetSems(int sem_id);
@@ -86,7 +85,7 @@ int main(int args,char* argv[]){
     for(i=0;i<SO_MERCI;i++)
     {
         sh_mem-> merci[i].id=i;
-        sh_mem-> merci[i].size=rand()%(int)%SO_SIZE+1;
+        sh_mem-> merci[i].size=rand()%(int)SO_SIZE+1;
         sh_mem-> merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
         sh_mem-> merci[i].num=0;
     }
@@ -100,11 +99,13 @@ int main(int args,char* argv[]){
     semop(sem_id,&sops,1);
     gennavi();
     
-    while(wait(NULL)!=-1);
+    sops.sem_num=2;
+    sops.sem_op=-(SO_PORTI+SO_NAVI+1);
+    semop(sem_id,&sops,1);
     shmdt ( sh_mem );
-    printf("Deleting smh with id %d\n", mem_id);
+    printf("Deleting smh with id %d\n",mem_id);
     shmctl(mem_id , IPC_RMID , NULL);
-    printf("Deleting sem with id %d\n", sem_id);
+    printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
     return 0;
 }

@@ -2,7 +2,7 @@
 #ifndef SHM_H
 #define SHM_H  
 #define _GNU_SOURCE
-#define NUM_SEMS 2
+#define NUM_SEMS 3
 #define SO_PORTI 6
 #define SO_LATO 100.00 
 #define SO_NAVI 20
@@ -34,16 +34,16 @@ struct coordinates{
     double x;
     double y;
 };
-
-struct shared_data {
-    struct coordinates all_ports[SO_PORTI];
-    struct merce merci[SO_MERCI];
-};
-
 struct merce {
     int id;
     int size;
     int vita;
     int num;
 };
+struct shared_data {
+    struct coordinates all_ports[SO_PORTI];
+    struct merce merci[SO_MERCI];
+};
+
+
 #endif

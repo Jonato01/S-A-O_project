@@ -66,5 +66,8 @@ int main(int argc, char * argv[]){
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
+    sops.sem_num=2;
+    sops.sem_op=1;
+    semop(sem_id,&sops,1);
     exit(0);
 }

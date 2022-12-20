@@ -35,6 +35,8 @@ int main (int argc, char * argv[]){
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
     gennave();
-    
+    sops.sem_num=2;
+    sops.sem_op=1;
+    semop(sem_id,&sops,1);
     exit(0);
 }
