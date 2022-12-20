@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -11,15 +11,50 @@
 
 #include "shm.h"
 
-
-
 struct coordinates coor;
 int porto_id;
 
 void creaPorto(){
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
 }
+struct merce* merciric(struct shared_data * sh_mem)
+{
+    
+    struct merce *merci;
+    int i; int x; int r;
+    srand(getpid());
+    merci=calloc(MERCI_RIC_DOM,sizeof(struct merce));
 
+        
+        merci[0].id=rand()%SO_MERCI;
+        merci[0].vita=sh_mem-> merci[merci[0].id].vita;
+        merci[0].size=sh_mem-> merci[merci[0].id].size;
+        for(i=1;i<MERCI_RIC_DOM;i++)
+        {
+            while(1){
+            r=rand()%SO_MERCI;
+            for(x = 0; x < i; x++)
+            {
+            if(merci[x].id==r)
+                break;
+            }
+            if(x==i){
+                merci[i].id=r;
+                merci[i].vita=sh_mem-> merci[merci[i].id].vita;
+                merci[i].size=sh_mem-> merci[merci[i].id].size;
+                merci[i].num=rand()%MAX_NUM_LOTTI+1;
+                break;
+            }}
+    
+        
+        printf("creata richiesta di merce %d a porto %d\n",merci[i].id,porto_id);
+    }
+    return merci;
+
+
+
+
+}
 int main(int argc, char * argv[]){
     
     int mem_id;
@@ -61,8 +96,9 @@ int main(int argc, char * argv[]){
     sh_mem->all_ports[porto_id].x = coor.x;
     sh_mem->all_ports[porto_id].y = coor.y;
     UNLOCK
-
+    
     printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
+    merciric(sh_mem);
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);

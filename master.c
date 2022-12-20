@@ -60,18 +60,15 @@ void genporti()
         }
     }
 }
-void genmerci(struct merce *merc)
-{
-    
-}
 int main(int args,char* argv[]){
     int mem_id;
     int i;
     int sem_id; 
     struct shared_data * sh_mem;
     struct sembuf sops;
+
     srand(getpid());
-    struct merce *merc;
+    
     /*creazione IPC obj*/
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
