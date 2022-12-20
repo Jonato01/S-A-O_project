@@ -10,18 +10,32 @@
 #include <sys/shm.h>
 
 #include "shm.h"
-
+struct shared_data * sh_mem;
 struct coordinates coor;
-int porto_id;
+ int porto_id;
 
 void creaPorto(){
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
+    int x;
+    
+        
+        while(1){
+        coor.x = rand() % (int)(SO_LATO + 1);
+        coor.y = rand() % (int)(SO_LATO + 1);
+        for(x = 0; x < porto_id; x++)
+        {
+        if(sh_mem->all_ports[x].x != coor.x && sh_mem->all_ports[x].y!=coor.y)
+            break;
+        }
+        if(x==porto_id)       
+            break;
+            }    
 }
-struct merce* merciric(struct shared_data * sh_mem)
+struct merce* genmerci()
 {
     
     struct merce *merci;
-    int i; int x; int r;
+    int i; int x; int r; 
     srand(getpid());
     merci=calloc(MERCI_RIC_DOM,sizeof(struct merce));
 
@@ -54,12 +68,12 @@ struct merce* merciric(struct shared_data * sh_mem)
 
 
 
-}
+}   
 int main(int argc, char * argv[]){
     
     int mem_id;
     int sem_id;
-    struct shared_data * sh_mem;
+   
     struct sembuf sops;
     srand(getpid());
     porto_id = atoi(argv[1]);
@@ -68,7 +82,7 @@ int main(int argc, char * argv[]){
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
-
+    LOCK
     switch(porto_id){
         case 0:
             coor.x = 0;
@@ -87,18 +101,17 @@ int main(int argc, char * argv[]){
             coor.y = SO_LATO;
             break;
         default:
-            coor.x = rand() % (int)(SO_LATO + 1);
-            coor.y = rand() % (int)(SO_LATO + 1);
             creaPorto();
             break;
     }
-    LOCK
+    
     sh_mem->all_ports[porto_id].x = coor.x;
     sh_mem->all_ports[porto_id].y = coor.y;
-    UNLOCK
+    
     
     printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
-    merciric(sh_mem);
+    genmerci();
+    UNLOCK
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);

@@ -97,7 +97,7 @@ int main(int args,char* argv[]){
     gennavi();
     
     sops.sem_num=2;
-    sops.sem_op=-(SO_PORTI+SO_NAVI+1);
+    sops.sem_op=-(SO_PORTI+SO_NAVI);
     semop(sem_id,&sops,1);
     shmdt ( sh_mem );
     printf("Deleting smh with id %d\n",mem_id);
