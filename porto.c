@@ -12,25 +12,28 @@
 #include "shm.h"
 struct shared_data * sh_mem;
 struct coordinates coor;
- int porto_id;
+int porto_id;
 
 void creaPorto(){
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
-    int x;
-    
-        
-        while(1){
+    int i;
+    bool flag = false;   
+    do{
         coor.x = rand() % (int)(SO_LATO + 1);
         coor.y = rand() % (int)(SO_LATO + 1);
-        for(x = 0; x < porto_id; x++)
-        {
-        if(sh_mem->all_ports[x].x != coor.x && sh_mem->all_ports[x].y!=coor.y)
-            break;
+
+        for(i = 0; i < porto_id; i++){
+            if(coor.x == sh_mem->all_ports[i].x && coor.y == sh_mem->all_ports[i].y){
+                printf("Porto n. %d, coordinate uguali al porto %d, riprovo\n", porto_id, i);
+                flag = true;
+                break;
+            } else {
+                flag = false;
+            }
         }
-        if(x==porto_id)       
-            break;
-            }    
+    }while(flag);
 }
+
 struct merce* genmerci()
 {
     
@@ -38,19 +41,17 @@ struct merce* genmerci()
     int i; int x; int r; 
     srand(getpid());
     merci=calloc(MERCI_RIC_DOM,sizeof(struct merce));
-
-        
-        merci[0].id=rand()%SO_MERCI;
-        merci[0].vita=sh_mem-> merci[merci[0].id].vita;
-        merci[0].size=sh_mem-> merci[merci[0].id].size;
-        for(i=1;i<MERCI_RIC_DOM;i++)
-        {
-            while(1){
-            r=rand()%SO_MERCI;
+    merci[0].id=rand()%SO_MERCI;
+    merci[0].vita=sh_mem-> merci[merci[0].id].vita;
+    merci[0].size=sh_mem-> merci[merci[0].id].size;
+    for(i=1;i<MERCI_RIC_DOM;i++)
+    {
+        while(1){
+        r=rand()%SO_MERCI;
             for(x = 0; x < i; x++)
             {
-            if(merci[x].id==r)
-                break;
+                if(merci[x].id==r)
+                    break;
             }
             if(x==i){
                 merci[i].id=r;
@@ -58,17 +59,14 @@ struct merce* genmerci()
                 merci[i].size=sh_mem-> merci[merci[i].id].size;
                 merci[i].num=rand()%MAX_NUM_LOTTI+1;
                 break;
-            }}
-    
-        
+            }
+        }
         printf("creata merce %d a porto %d\n",merci[i].id,porto_id);
     }
+    printf("\n");
     return merci;
+} 
 
-
-
-
-}   
 int main(int argc, char * argv[]){
     
     int mem_id;
@@ -112,11 +110,14 @@ int main(int argc, char * argv[]){
     printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
     genmerci();
     UNLOCK
+
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
+
     sops.sem_num=2;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
+
     exit(0);
 }

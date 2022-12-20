@@ -12,7 +12,6 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 
-
 /*Dimensioni della mappa in km*/
 void resetSems(int sem_id);
 void genmerci(struct merce *merc);
@@ -24,6 +23,7 @@ void resetSems(int sem_id){
         semctl(sem_id, i, SETVAL, 1);
     }
 }
+
 void gennavi()
 {
     int i;
@@ -42,8 +42,11 @@ void gennavi()
         }
     }
 }
-void genporti()
+
+void genporti(struct sembuf sops, int sem_id)
 {
+    pid_t child_pid;
+    int status;
     int i;
     char *c;
     char * argsnavi[]={PORTI_PATH_NAME,NULL,NULL};
@@ -51,15 +54,19 @@ void genporti()
     
     /*creazione porti*/
     for(i = 0; i < SO_PORTI; i++){
-        if(!fork()){
+        child_pid = fork();
+        if(!child_pid){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
-            execve(PORTI_PATH_NAME,argsnavi,NULL);
+
+            execve(PORTI_PATH_NAME,argsnavi,NULL);            
             perror("Execve porti er");
 	    	exit(1);
         }
+        waitpid(child_pid, &status, 0);
     }
 }
+
 int main(int args,char* argv[]){
     int mem_id;
     int i;
@@ -75,7 +82,7 @@ int main(int args,char* argv[]){
     resetSems(sem_id);
     mem_id = shmget (getpid(), sizeof(*sh_mem), 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id, NULL, 0);    
-    printf("Creating shm with id: %d\nCreating sem with id:%d\n", mem_id, sem_id);
+    printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", mem_id, sem_id);
     
     /*creazione merci*/
     LOCK
@@ -88,9 +95,8 @@ int main(int args,char* argv[]){
     }
     UNLOCK
 
-    genporti();
-    
-    
+    genporti(sops, sem_id);
+     
     sops.sem_num=1;
     sops.sem_op=-SO_PORTI;
     semop(sem_id,&sops,1);
@@ -100,7 +106,7 @@ int main(int args,char* argv[]){
     sops.sem_op=-(SO_PORTI+SO_NAVI);
     semop(sem_id,&sops,1);
     shmdt ( sh_mem );
-    printf("Deleting smh with id %d\n",mem_id);
+    printf("\nDeleting smh with id %d\n",mem_id);
     shmctl(mem_id , IPC_RMID , NULL);
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
