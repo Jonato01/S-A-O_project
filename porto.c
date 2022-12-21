@@ -8,8 +8,8 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
-
 #include "shm.h"
+
 struct shared_data * sh_mem;
 struct coordinates coor;
 int porto_id;
@@ -24,7 +24,6 @@ void creaPorto(){
 
         for(i = 0; i < porto_id; i++){
             if(coor.x == sh_mem->porti[i].coord.x && coor.y == sh_mem->porti[i].coord.y){
-                printf("Porto n. %d, coordinate uguali al porto %d, riprovo\n", porto_id, i);
                 flag = true;
                 break;
             } else {
@@ -59,23 +58,20 @@ void genric()
             sh_mem->porti[porto_id].ric[x].id=r;
             sh_mem->porti[porto_id].ric[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].vita;
             sh_mem->porti[porto_id].ric[x].size=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].size;
+            sh_mem->porti[porto_id].ric[x].pre=false;
             sh_mem->porti[porto_id].ric[x].num=rand()%MAX_NUM_LOTTI+1;
             break;
             }
         }
         
-        printf("creata domanda di merce %d a porto %d\n",sh_mem->porti[porto_id].ric[i].id,porto_id);
+        printf("creata domanda di %d ton di merce %d a porto %d\n", sh_mem->merci[sh_mem->porti[porto_id].ric[x].id].size, sh_mem->porti[porto_id].ric[i].id,porto_id);
     }
     printf("\n");
     
 }
 
-
-
-
 void genmerci()
 {
-
     int i; int x; int r; 
     srand(getpid());
     for(i=0;i<MERCI_RIC_OFF;i++)
@@ -91,12 +87,12 @@ void genmerci()
             sh_mem->porti[porto_id].off[x].id=r;
             sh_mem->porti[porto_id].off[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].vita;
             sh_mem->porti[porto_id].off[x].size=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size;
+            sh_mem->porti[porto_id].off[x].pre=false;
             sh_mem->porti[porto_id].off[x].num=rand()%MAX_NUM_LOTTI+1;
             break;
             }
-        }
-        
-        printf("creata merce %d a porto %d\n",sh_mem->porti[porto_id].off[i].id,porto_id);
+        }        
+        printf("create %d ton di merce %d a porto %d\n",sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size, sh_mem->porti[porto_id].off[i].id,porto_id);
     }
     printf("\n");
     
@@ -110,7 +106,6 @@ int main(int argc, char * argv[]){
     struct sembuf sops;
     srand(getpid());
     porto_id = atoi(argv[1]);
-    
 
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
@@ -144,18 +139,18 @@ int main(int argc, char * argv[]){
     LOCK
     sh_mem->porti[porto_id].coord.x = coor.x;
     sh_mem->porti[porto_id].coord.y = coor.y;
-    UNLOCK
-    
-    printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
-    LOCK
+    sh_mem->porti[porto_id].maxbanchine = rand() % SO_BANCHINE + 1;
+    sh_mem->porti[porto_id].banchinelibere = sh_mem->porti[porto_id].maxbanchine;
+
+    printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, sh_mem->porti[porto_id].maxbanchine);
+
     genmerci();
     genric();
     UNLOCK
+
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
-
-    
 
     sops.sem_num=2;
     sops.sem_op=1;

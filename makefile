@@ -7,7 +7,7 @@ all: 	master nave porto
 master: master.o 
 	    gcc master.o -o master 
 nave:   nave.o
-		gcc nave.o -o nave 
+		gcc nave.o -o nave -lm
 porto:  porto.o
 		gcc porto.o -o porto
 
