@@ -35,6 +35,7 @@ struct coordinates{
     double y;
 };
 struct merce {
+    int status;
     int id;
     int size;
     int vita;

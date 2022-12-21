@@ -36,7 +36,9 @@ void creaPorto(){
 
 void genric()
 {
-    int j;int i; int x; int r; 
+    int j;int i; int x; int r;
+    bool off;
+     
     srand(getpid());
     for(i=0;i<MERCI_RIC_OFF;i++)
     {
@@ -45,9 +47,15 @@ void genric()
             for(x = 0; x < i; x++)
             {
                 if(sh_mem->porti[porto_id].ric[x].id==r)
-                break;
+                break;    
             }
-            if(x==i){
+            off=true;
+            for(j=0; j<MERCI_RIC_OFF && off;j++)
+            {
+                    if(r==sh_mem->porti[porto_id].off[j].id)
+                    off=false;
+            }
+            if(x==i && off){
             sh_mem->porti[porto_id].ric[x].id=r;
             sh_mem->porti[porto_id].ric[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].vita;
             sh_mem->porti[porto_id].ric[x].size=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].size;
@@ -56,7 +64,7 @@ void genric()
             }
         }
         
-        printf("creata merce %d a porto %d\n",sh_mem->porti[porto_id].ric[i].id,porto_id);
+        printf("creata domanda di merce %d a porto %d\n",sh_mem->porti[porto_id].ric[i].id,porto_id);
     }
     printf("\n");
     
@@ -139,8 +147,10 @@ int main(int argc, char * argv[]){
     UNLOCK
     
     printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
+    LOCK
     genmerci();
-    
+    genric();
+    UNLOCK
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
