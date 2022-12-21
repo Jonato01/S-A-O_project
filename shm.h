@@ -3,15 +3,15 @@
 #define SHM_H  
 #define _GNU_SOURCE
 #define NUM_SEMS 4
-#define SO_PORTI 50
+#define SO_PORTI 6
 #define MAX_NUM_LOTTI 10
 #define SO_LATO 100.00 
-#define SO_NAVI 100
+#define SO_NAVI 20
 #define SO_GIORNI 30
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
 #define SO_MERCI 12
-#define MERCI_RIC_OFF 6
+#define MERCI_RIC_OFF 5
 #define SO_SIZE 100 
 #define SO_MIN_VITA 2 
 #define S0_MAX_VITA 10
@@ -34,18 +34,28 @@ struct coordinates{
     double x;
     double y;
 };
-
 struct merce {
     int id;
     int size;
     int vita;
     int num;
 };
+struct porto {
+    int idp;
+    struct coordinates coord;
+    struct merce ric[MERCI_RIC_OFF];
+    struct merce off[MERCI_RIC_OFF];
+
+};
+
 
 struct shared_data {
-    struct coordinates all_ports[SO_PORTI];
     struct merce merci[SO_MERCI];
+    struct porto porti[SO_PORTI];
+
+    
 };
+
 
 
 #endif
