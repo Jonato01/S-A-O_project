@@ -40,11 +40,11 @@ struct merce* genmerci()
     struct merce *merci;
     int i; int x; int r; 
     srand(getpid());
-    merci=calloc(MERCI_RIC_DOM,sizeof(struct merce));
+    merci=calloc(MERCI_RIC_OFF,sizeof(struct merce));
     merci[0].id=rand()%SO_MERCI;
     merci[0].vita=sh_mem-> merci[merci[0].id].vita;
     merci[0].size=sh_mem-> merci[merci[0].id].size;
-    for(i=1;i<MERCI_RIC_DOM;i++)
+    for(i=1;i<MERCI_RIC_OFF;i++)
     {
         while(1){
         r=rand()%SO_MERCI;
@@ -75,12 +75,11 @@ int main(int argc, char * argv[]){
     struct sembuf sops;
     srand(getpid());
     porto_id = atoi(argv[1]);
-
+    
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
-    LOCK
     switch(porto_id){
         case 0:
             coor.x = 0;
@@ -103,21 +102,23 @@ int main(int argc, char * argv[]){
             break;
     }
     
+    LOCK
     sh_mem->all_ports[porto_id].x = coor.x;
     sh_mem->all_ports[porto_id].y = coor.y;
-    
+    UNLOCK
     
     printf("Creato il porto %d in posizione %f, %f\n", porto_id, coor.x, coor.y);
     genmerci();
-    UNLOCK
-
+    
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
 
+    
+
     sops.sem_num=2;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
-
+    shmdt ( sh_mem );
     exit(0);
 }

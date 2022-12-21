@@ -12,9 +12,11 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 
-/*Dimensioni della mappa in km*/
+
+int sem_id; int mem_id;
+struct shared_data * sh_mem;
+struct sembuf sops;
 void resetSems(int sem_id);
-void genmerci(struct merce *merc);
 void genporti();
 void gennavi();
 void resetSems(int sem_id){
@@ -30,7 +32,6 @@ void gennavi()
     char *c;
     char * argsnavi[]={NAVI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
-    
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
         if(!fork()){
@@ -40,22 +41,26 @@ void gennavi()
             perror("Execve navi er");
 	    	exit(1);
         }
+        sops.sem_num=1;
+        sops.sem_op=-1;
+        semop(sem_id,&sops,1);
     }
 }
 
-void genporti(struct sembuf sops, int sem_id)
+void genporti()
 {
-    pid_t child_pid;
-    int status;
+    
     int i;
     char *c;
     char * argsnavi[]={PORTI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
-    
+   /* sops.sem_num=1;
+    sops.sem_op=-1;
+    semop(sem_id,&sops,1);*/
     /*creazione porti*/
     for(i = 0; i < SO_PORTI; i++){
-        child_pid = fork();
-        if(!child_pid){
+        
+        if(!fork()){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
 
@@ -63,16 +68,15 @@ void genporti(struct sembuf sops, int sem_id)
             perror("Execve porti er");
 	    	exit(1);
         }
-        waitpid(child_pid, &status, 0);
+        sops.sem_num=1;
+        sops.sem_op=-1;
+        semop(sem_id,&sops,1);
     }
 }
 
 int main(int args,char* argv[]){
-    int mem_id;
+    
     int i;
-    int sem_id; 
-    struct shared_data * sh_mem;
-    struct sembuf sops;
 
     srand(getpid());
     
@@ -95,15 +99,13 @@ int main(int args,char* argv[]){
     }
     UNLOCK
 
-    genporti(sops, sem_id);
+    genporti();
      
-    sops.sem_num=1;
-    sops.sem_op=-SO_PORTI;
-    semop(sem_id,&sops,1);
+    
     gennavi();
     
     sops.sem_num=2;
-    sops.sem_op=-(SO_PORTI+SO_NAVI);
+    sops.sem_op=-(SO_PORTI+SO_NAVI+1);
     semop(sem_id,&sops,1);
     shmdt ( sh_mem );
     printf("\nDeleting smh with id %d\n",mem_id);
