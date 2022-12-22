@@ -17,37 +17,60 @@ int sem_id;
 bool empty = true;
 int nave_id;
 double carico;
+int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
 
-void ordinaporti(){
-    /*Più facile con un vettore di sole coordinate*/
+void swap(int* xp, int* yp)
+{
+    int temp = *xp;
+    *xp = *yp;
+    *yp = temp;
 }
 
-/*MODIFICARE IN MODO DA AVERE I PORTI GIÀ ORDINATI PER DISTANZA*/
+void ordinaporti(){
+    int i;
+    int j;
+    bool swapped;
+    for(i = 0; i < SO_PORTI; i++){
+        ord[i] = sh_mem->porti[i].idp;
+    }
+    for (i = 0; i < SO_PORTI - 1; i++){
+        swapped = false;
+        for (j = 0; j < SO_PORTI - i - 1; j++)
+            if (DISTANCE(sh_mem->porti[ord[j]].coord, coor) > DISTANCE(sh_mem->porti[ord[j+1]].coord, coor)){
+                swap(&ord[j], &ord[j + 1]);
+                swapped = true;
+            }
+        if(!swapped)
+            break;
+    }
+    printf("Nave %d:porti in ordine\n", nave_id);
+    for(i = 0; i < SO_PORTI; i++){
+        printf("%d ", ord[i]);
+    }
+    printf("\n");
+}
+
 int getnporto(){
     int x = -1;
     int i;
     int j;
     bool flag = false;
-    double d = SO_LATO * sqrt(2);
     LOCK
     if(carico < SO_SIZE){
         for(i = 0; i < SO_PORTI; i++){
-            if(DISTANCE(sh_mem->porti[i].coord, coor) < d){
-                d = DISTANCE(sh_mem->porti[i].coord, coor);
-                if(sh_mem->porti[i].banchinelibere > 0){
-                    for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[i].off[j].size + carico < SO_SIZE; j++){
-                        if(!sh_mem->porti[i].off[j].pre){
-                            flag = true;
-                            sh_mem->porti[i].off[j].pre = true;
-                            carico += sh_mem->porti[i].off[j].size;
-                            printf("Nave %d: prenotata merce %d dal porto %d\n", nave_id, sh_mem->porti[i].off[j].id, i);
-                        }
+            if(sh_mem->porti[ord[i]].banchinelibere > 0){
+                for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[ord[i]].off[j].size + carico < SO_SIZE; j++){
+                    if(!sh_mem->porti[ord[i]].off[j].pre){
+                        flag = true;
+                        sh_mem->porti[ord[i]].off[j].pre = true;
+                        carico += sh_mem->porti[ord[i]].off[j].size;
+                        printf("Nave %d: prenotata merce %d dal porto %d\n", nave_id, sh_mem->porti[i].off[j].id, ord[i]);
                     }
                 }
-                if(flag){
-                    x = i;
-                    break;
-                }
+            }
+            if(flag){
+                x = ord[i];
+                break;
             }
         }
         if(!flag)
@@ -78,6 +101,7 @@ int main (int argc, char * argv[]){
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
     gennave();
+    ordinaporti();
     nportoid=getnporto();
     if(nportoid != -1)
         printf("Mi dirigo verso il porto %d\nDistanza: %f\n\n", nportoid, DISTANCE(sh_mem->porti[nportoid].coord, coor));
