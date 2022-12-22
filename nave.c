@@ -10,16 +10,15 @@
 #include <math.h>
 #include "shm.h"
 
-struct coordinates coor;
 struct sembuf sops;
 struct shared_data * sh_mem;
 int sem_id;
+struct merce *merci_ric;
 bool empty = true;
-int nave_id;
-double carico_pre;
-double carico;
-int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
 
+struct nave barchetta;
+
+int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
 void swap(int* xp, int* yp)
 {
     int temp = *xp;
@@ -27,7 +26,7 @@ void swap(int* xp, int* yp)
     *yp = temp;
 }
 
-void ordinaporti(){
+void ordinaporti(struct coord){
     int i;
     int j;
     bool swapped;
@@ -35,67 +34,100 @@ void ordinaporti(){
         ord[i] = sh_mem->porti[i].idp;
     }
     for (i = 0; i < SO_PORTI - 1; i++){
-        swapped = false;
+        swappxed = false;
         for (j = 0; j < SO_PORTI - i - 1; j++)
-            if (DISTANCE(sh_mem->porti[ord[j]].coord, coor) > DISTANCE(sh_mem->porti[ord[j+1]].coord, coor)){
+            if (DISTANCE(sh_mem->porti[ord[j]].coord,coord) > DISTANCE(sh_mem->porti[ord[j+1]].coord,coord)){
                 swap(&ord[j], &ord[j + 1]);
                 swapped = true;
             }
         if(!swapped)
             break;
     }
-    printf("Nave %d:porti in ordine\n", nave_id);
     for(i = 0; i < SO_PORTI; i++){
         printf("%d ", ord[i]);
     }
-    printf("\n");
 }
-
-int getnporto(){
+int getpart()
+{
     int x = -1;
     int i;
     int j;
     bool flag = false;
     LOCK
-    if(carico_pre < SO_CAPACITY){
+    
         for(i = 0; i < SO_PORTI; i++){
-            if(sh_mem->porti[ord[i]].banchinelibere > 0){
-                for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[ord[i]].off[j].size + carico_pre < SO_SIZE; j++){
+            for(j = 0; j < MERCI_RIC_OFF && merci_ric[j]!=0 ; j++){
                     if(!sh_mem->porti[ord[i]].off[j].pre){
                         flag = true;
                         sh_mem->porti[ord[i]].off[j].pre = true;
-                        carico_pre += sh_mem->porti[ord[i]].off[j].size;
-                        printf("Nave %d: prenotata merce %d dal porto %d\n", nave_id, sh_mem->porti[i].off[j].id, ord[i]);
+
                     }
                 }
+            
+                if(flag){
+                    x = ord[i];
+                    break;
             }
+        }
+        
+    UNLOCK
+    printf("");
+    barchetta.idp_dest=x;
+}
+
+
+
+
+
+
+
+
+void getdest()
+{
+    int x = -1;
+    int i;
+    int j;
+    bool flag = false;
+    LOCK
+    if(barchetta.carico_pre < SO_CAPACITY){
+        for(i = 0; i < SO_PORTI; i++){
+            for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[ord[i]].off[j].size + barchetta.carico_pre < SO_SIZE; j++){
+                if(!sh_mem->porti[ord[i]].off[j].pre){
+                    flag = true;
+                    sh_mem->porti[ord[i]].off[j].pre = true;
+                    merci_ric[j]=sh_mem->porti[ord[i]].off[j];
+                    barchetta.carico_pre += sh_mem->porti[ord[i]].off[j].size;
+                    printf("Nave %d: prenotata merce %d dal porto %d\n", barchetta.idn, sh_mem->porti[i].off[j].id, ord[i]);
+                    }
+                }
+            
             if(flag){
                 x = ord[i];
                 break;
             }
         }
         if(!flag)
-            printf("Nave %d: nessun porto utilizzabile! (carico)\n", nave_id);
+            printf("Nave %d: nessun porto utilizzabile! (carico)\n", barchetta.idn);
     }else
-        printf("Nave %d piena!\n", nave_id);
+        printf("Nave %d piena!\n", barchetta.idn);
     UNLOCK
-    return x;
+    barchetta.idp_dest=x;
 }
 
 void gennave()
 {
-    coor.x = rand() % (int)(SO_LATO + 1);
-    coor.y = rand() % (int)(SO_LATO + 1);
-    carico = 0;
-    carico_pre = 0;
-    printf("Creata nave n. %d in posizione %f, %f\n", nave_id, coor.x, coor.y);
+    barchetta.coord.x = rand() % (int)(SO_LATO + 1);
+    barchetta.coord.y = rand() % (int)(SO_LATO + 1);
+    barchetta.carico = 0;
+    barchetta.carico_pre = 0;
+    printf("Creata nave n. %d in posizione %f, %f\n", barchetta.idn, barchetta.coord.x, barchetta.coord.y);
 }
 
 int main (int argc, char * argv[]){
     
     int mem_id;
-    int nportoid;
-    nave_id = atoi(argv[1]);
+    merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));    
+    barchetta.idn= atoi(argv[1]);
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
@@ -103,10 +135,11 @@ int main (int argc, char * argv[]){
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
     gennave();
-    ordinaporti();
-    nportoid=getnporto();
-    if(nportoid != -1)
-        printf("Mi dirigo verso il porto %d\nDistanza: %f\n\n", nportoid, DISTANCE(sh_mem->porti[nportoid].coord, coor));
+    ordinaporti(barchetta.coord);
+    barchetta.idp_dest=getpart();
+    ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
+    if(barchetta.idp_dest != -1)
+        printf("Mi dirigo verso il porto %d\nDistanza: %f\n\n", barchetta.idp_dest, DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
 
     /*CONTINUARE*/
 

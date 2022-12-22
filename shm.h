@@ -42,6 +42,16 @@ struct merce {
     int num;
     bool pre;
 };
+struct nave
+{
+    int idn;
+    struct coordinates coord;
+    int idp_dest;/* final destination fox only dove consegnamo */
+    int idp_part;/* dove carichiamo */
+    struct merce merci_car[SO_MERCI];
+    double carico;
+    double carico_pre;
+};
 
 struct porto {
     int idp;
