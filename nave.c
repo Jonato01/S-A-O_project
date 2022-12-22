@@ -47,6 +47,18 @@ void ordinaporti(struct coord){
         printf("%d ", ord[i]);
     }
 }
+
+bool cerca_merce(int idp)
+{
+    int i;
+    bool ce=false;
+    for(i=0;!ce && i<MERCI_RIC_OFF;i++)
+    if(sh_mem->porti[idp].off[i].id==merci_ric[i])
+    ce=!ce;
+
+    
+    return ce;
+}
 int getpart()
 {
     int x = -1;
