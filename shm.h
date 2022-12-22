@@ -16,7 +16,7 @@
 #define SO_MIN_VITA 2 
 #define S0_MAX_VITA 10
 #define SO_SPEED 30
-#define SO_CAPACITY 300
+#define SO_CAPACITY 200
 #define SO_BANCHINE 4
 #define DISTANCE(a, b) sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2))
 /*0:    protezione shm  1: creazione porti in ordine 2: controllare fine di ogni figlio*/

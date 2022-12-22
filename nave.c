@@ -16,6 +16,7 @@ struct shared_data * sh_mem;
 int sem_id;
 bool empty = true;
 int nave_id;
+double carico_pre;
 double carico;
 int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
 
@@ -56,14 +57,14 @@ int getnporto(){
     int j;
     bool flag = false;
     LOCK
-    if(carico < SO_SIZE){
+    if(carico_pre < SO_CAPACITY){
         for(i = 0; i < SO_PORTI; i++){
             if(sh_mem->porti[ord[i]].banchinelibere > 0){
-                for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[ord[i]].off[j].size + carico < SO_SIZE; j++){
+                for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[ord[i]].off[j].size + carico_pre < SO_SIZE; j++){
                     if(!sh_mem->porti[ord[i]].off[j].pre){
                         flag = true;
                         sh_mem->porti[ord[i]].off[j].pre = true;
-                        carico += sh_mem->porti[ord[i]].off[j].size;
+                        carico_pre += sh_mem->porti[ord[i]].off[j].size;
                         printf("Nave %d: prenotata merce %d dal porto %d\n", nave_id, sh_mem->porti[i].off[j].id, ord[i]);
                     }
                 }
@@ -86,6 +87,7 @@ void gennave()
     coor.x = rand() % (int)(SO_LATO + 1);
     coor.y = rand() % (int)(SO_LATO + 1);
     carico = 0;
+    carico_pre = 0;
     printf("Creata nave n. %d in posizione %f, %f\n", nave_id, coor.x, coor.y);
 }
 

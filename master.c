@@ -97,8 +97,7 @@ int main(int args,char* argv[]){
     }
     UNLOCK
 
-    genporti();
-     
+    genporti();     
     
     gennavi();
     
@@ -106,7 +105,7 @@ int main(int args,char* argv[]){
     sops.sem_op=-(SO_PORTI+SO_NAVI);
     semop(sem_id,&sops,1);
     shmdt ( sh_mem );
-    printf("\nDeleting smh with id %d\n",mem_id);
+    printf("\nDeleting shm with id %d\n",mem_id);
     shmctl(mem_id , IPC_RMID , NULL);
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
