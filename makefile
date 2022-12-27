@@ -2,7 +2,7 @@ CFLAGS=-Wall -std=c89 -pedantic
 OPTIONS=
 
 
-all: 	master nave porto
+all: 	clean master nave porto
 
 master: master.o 
 	    gcc master.o -o master 

@@ -49,12 +49,12 @@ void gennavi()
 
 void genporti()
 {
-    
+    int banchine;
     int i;
     char *c;
     char * argsnavi[]={PORTI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
-    
+    banchine = semget(getpid()+2,SO_PORTI,0600 | IPC_CREAT);
     /*creazione porti*/
     for(i = 0; i < SO_PORTI; i++){
         

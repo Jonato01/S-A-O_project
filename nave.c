@@ -19,6 +19,7 @@ bool empty = true;
 struct nave barchetta;
 
 int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
+
 void swap(int* xp, int* yp)
 {
     int temp = *xp;
@@ -134,6 +135,16 @@ void gennave()
     barchetta.carico_pre = 0;
     printf("Creata nave n. %d in posizione %f, %f\n", barchetta.idn, barchetta.coord.x, barchetta.coord.y);
 }
+
+
+
+
+
+
+
+
+
+
 
 int main (int argc, char * argv[]){
     

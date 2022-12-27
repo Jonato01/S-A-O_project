@@ -1,7 +1,8 @@
-#include <stdbool.h>
+
 #ifndef SHM_H
 #define SHM_H 
 #define _GNU_SOURCE
+#include <stdbool.h>
 #define NUM_SEMS 4
 #define SO_PORTI 10
 #define MAX_NUM_LOTTI 10
@@ -16,7 +17,7 @@
 #define SO_MIN_VITA 2 
 #define S0_MAX_VITA 10
 #define SO_SPEED 30
-#define SO_CAPACITY 200
+#define SO_CAPACITY 120
 #define SO_BANCHINE 4
 #define DISTANCE(a, b) sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2))
 /*0:    protezione shm  1: creazione porti in ordine 2: controllare fine di ogni figlio*/
@@ -58,8 +59,6 @@ struct porto {
     struct coordinates coord;
     struct merce ric[MERCI_RIC_OFF];
     struct merce off[MERCI_RIC_OFF];
-    int maxbanchine;
-    int banchinelibere;
 };
 
 

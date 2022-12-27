@@ -17,6 +17,7 @@ int porto_id;
 void creaPorto(){
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
     int i;
+    
     bool flag = false;   
     do{
         coor.x = rand() % (int)(SO_LATO + 1);
@@ -32,6 +33,12 @@ void creaPorto(){
         }
     }while(flag);
 }
+
+
+
+
+
+
 
 void genric()
 {
@@ -99,14 +106,14 @@ void genmerci()
 } 
 
 int main(int argc, char * argv[]){
-    
+    int maxbanchine;
     int mem_id;
     int sem_id;
-   
+    int bancid; 
     struct sembuf sops;
     srand(getpid());
     porto_id = atoi(argv[1]);
-
+    bancid = semget(getppid()+2,SO_PORTI,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
     sh_mem = shmat(mem_id, NULL, 0);
@@ -139,10 +146,10 @@ int main(int argc, char * argv[]){
     LOCK
     sh_mem->porti[porto_id].coord.x = coor.x;
     sh_mem->porti[porto_id].coord.y = coor.y;
-    sh_mem->porti[porto_id].maxbanchine = rand() % SO_BANCHINE + 1;
-    sh_mem->porti[porto_id].banchinelibere = sh_mem->porti[porto_id].maxbanchine;
+    maxbanchine=rand() % SO_BANCHINE+1;
+    semctl(bancid, porto_id, SETVAL, maxbanchine );
 
-    printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, sh_mem->porti[porto_id].maxbanchine);
+    printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, maxbanchine);
 
     genmerci();
     genric();
