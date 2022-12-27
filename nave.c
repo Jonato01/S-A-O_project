@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -134,6 +135,9 @@ void gennave()
     barchetta.carico = 0;
     barchetta.carico_pre = 0;
     printf("Creata nave n. %d in posizione %f, %f\n", barchetta.idn, barchetta.coord.x, barchetta.coord.y);
+    sops.sem_num=1;
+    sops.sem_op=1;
+    semop(sem_id,&sops,1);
 }
 
 
@@ -149,6 +153,10 @@ void gennave()
 int main (int argc, char * argv[]){
     
     int mem_id;
+    struct timespec req;
+    struct timespec rem;
+    double distance;
+    double route_time;
     merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));    
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
@@ -164,14 +172,26 @@ int main (int argc, char * argv[]){
     barchetta.idp_dest = getdest();
     ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
     barchetta.idp_part = getpart();
-    if(barchetta.idp_part != -1)
-        printf("Mi dirigo verso il porto %d\nDistanza: %f\n\n", barchetta.idp_part, DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
-
+    if(barchetta.idp_part != -1){
+        LOCK
+        printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
+        UNLOCK
+        route_time = distance / SO_SPEED;
+        req.tv_sec = route_time;
+        req.tv_nsec = 0;
+        rem = req;
+        if(nanosleep(&req, &rem) == -1){
+            /* GESTIRE ERRORE CON ERRNO */
+            printf("Errore nella nanosleep!\n");
+            exit(-1);
+        }
+        LOCK
+        barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
+        UNLOCK
+        printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
+    }
     /*CONTINUARE*/
 
-    sops.sem_num=1;
-    sops.sem_op=1;
-    semop(sem_id,&sops,1);
     sops.sem_num=2;
     sops.sem_op=1;
     semop(sem_id,&sops,1);

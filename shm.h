@@ -1,7 +1,6 @@
 
 #ifndef SHM_H
 #define SHM_H 
-#define _GNU_SOURCE
 #include <stdbool.h>
 #define NUM_SEMS 4
 #define SO_PORTI 10
