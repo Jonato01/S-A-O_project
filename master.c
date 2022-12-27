@@ -14,7 +14,7 @@
 #include <sys/wait.h>
 
 
-int sem_id; int mem_id;
+int sem_id; int mem_id; int banchine;
 struct shared_data * sh_mem;
 struct sembuf sops;
 void resetSems(int sem_id);
@@ -50,7 +50,7 @@ void gennavi()
 
 void genporti()
 {
-    int banchine;
+    
     int i;
     char *c;
     char * argsnavi[]={PORTI_PATH_NAME,NULL,NULL};
@@ -110,5 +110,7 @@ int main(int args,char* argv[]){
     shmctl(mem_id , IPC_RMID , NULL);
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
+    semctl(banchine, 0, IPC_RMID);
+    
     return 0;
 }

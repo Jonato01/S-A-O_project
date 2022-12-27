@@ -16,7 +16,7 @@ struct shared_data * sh_mem;
 int sem_id;
 struct merce *merci_ric;
 bool empty = true;
-
+int bancid;
 struct nave barchetta;
 
 int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
@@ -163,6 +163,7 @@ int main (int argc, char * argv[]){
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
     mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
+    bancid = semget(getppid()+2,SO_PORTI,0600);
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
 

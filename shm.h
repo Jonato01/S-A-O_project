@@ -18,6 +18,15 @@
 #define SO_SPEED 30
 #define SO_CAPACITY 120
 #define SO_BANCHINE 4
+#define LOCK_BAN \
+sops.sem_num = porto_id;  \
+sops.sem_op=-1; \
+semop(bancid, &sops, 1);
+#define UNLOCK_BAN  \
+sops.sem_num = porto_id;  \
+sops.sem_op=1; \
+semop(bancid, &sops, 1);
+
 #define DISTANCE(a, b) sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2))
 /*0:    protezione shm  1: creazione porti in ordine 2: controllare fine di ogni figlio*/
 #define LOCK                    \
