@@ -189,7 +189,11 @@ int main (int argc, char * argv[]){
         LOCK
         barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
         UNLOCK
+        
         printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
+        LOCK_BAN (barchetta.idp_part);
+        sleep(2);
+        UNLOCK_BAN (barchetta.idp_part);
     }
     /*CONTINUARE*/
 

@@ -23,7 +23,7 @@ void gennavi();
 void resetSems(int sem_id){
     int i;
     for(i = 1; i < NUM_SEMS; i++){
-        semctl(sem_id, i, SETVAL, 0);
+        semctl(sem_id, i, SETVAL, 1);
     }
 }
 
@@ -33,6 +33,7 @@ void gennavi()
     char *c;
     char * argsnavi[]={NAVI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
+    
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
         if(!fork()){
@@ -103,7 +104,7 @@ int main(int args,char* argv[]){
     gennavi();
     
     sops.sem_num=2;
-    sops.sem_op=-(SO_PORTI+SO_NAVI);
+    sops.sem_op=-(SO_PORTI+SO_NAVI+1);
     semop(sem_id,&sops,1);
     shmdt ( sh_mem );
     printf("\nDeleting shm with id %d\n",mem_id);
