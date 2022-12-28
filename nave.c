@@ -15,7 +15,7 @@ struct sembuf sops;
 struct shared_data * sh_mem;
 int sem_id;
 struct merce *merci_ric;
-bool empty = true;
+int nmerci;
 int bancid;
 struct nave barchetta;
 
@@ -51,7 +51,7 @@ void ordinaporti(struct coordinates coord){
     printf("\n");*/
 }
 
-int contains(int portoid, int merceid){
+int containsOff(int portoid, int merceid){
     int i;
 
     for(i = 0; i < MERCI_RIC_OFF; i++){
@@ -72,7 +72,7 @@ int getpart()
     LOCK   
     for(i = 0; i < SO_PORTI; i++){
         for(j = 0; j < MERCI_RIC_OFF; j++){
-                y = contains(ord[i], merci_ric[j].id);
+                y = containsOff(ord[i], merci_ric[j].id);
                 if((y > -1) && !sh_mem->porti[ord[i]].off[y].pre && merci_ric[j].pre){
                     flag = true;
                     sh_mem->porti[ord[i]].off[y].pre = true;
@@ -89,7 +89,6 @@ int getpart()
         printf("Nave %d: nessun porto utilizzabile! (carico)\n", barchetta.idn);
     }     
     UNLOCK
-    printf("\n");
     return x;
 }
 
@@ -102,14 +101,17 @@ int getdest()
     LOCK
     if(barchetta.carico_pre < SO_CAPACITY){
         for(i = 0; i < SO_PORTI; i++){
-            for(j = 0; j < MERCI_RIC_OFF && sh_mem->porti[ord[i]].ric[j].size + barchetta.carico_pre < SO_CAPACITY; j++){
-                if(!sh_mem->porti[ord[i]].ric[j].pre){
+            for(j = 0; j < MERCI_RIC_OFF; j++){
+                if(!sh_mem->porti[ord[i]].ric[j].pre && sh_mem->porti[ord[i]].ric[j].size + barchetta.carico_pre < SO_CAPACITY){
                     flag = true;
                     sh_mem->porti[ord[i]].ric[j].pre = true;
             /*!!!j*/merci_ric[j]=sh_mem->porti[ord[i]].ric[j];
                     merci_ric[j].pre = true;
+                    nmerci++;
                     barchetta.carico_pre += sh_mem->porti[ord[i]].ric[j].size;
                     printf("Nave %d: prenotata merce %d da consegnare al porto %d (scarico)\n", barchetta.idn, sh_mem->porti[ord[i]].ric[j].id, ord[i]);
+                } else {
+                    merci_ric[j].id = -1;
                 }
             }
             
@@ -134,21 +136,29 @@ void gennave()
     barchetta.coord.y = rand() % (int)(SO_LATO + 1);
     barchetta.carico = 0;
     barchetta.carico_pre = 0;
-    printf("Creata nave n. %d in posizione %f, %f\n", barchetta.idn, barchetta.coord.x, barchetta.coord.y);
+    printf("Creata nave n. %d in posizione %f, %f\n\n", barchetta.idn, barchetta.coord.x, barchetta.coord.y);
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
 }
 
-
-
-
-
-
-
-
-
-
+void carico(){
+    int i;
+    int y;
+    for(i = 0; i < MERCI_RIC_OFF; i++){
+        if(merci_ric[i].id != -1){
+            y = containsOff(barchetta.idp_part, merci_ric[i].id);
+            if(y != -1){
+                merci_ric[i].status = 1;
+                LOCK
+                sh_mem->porti[barchetta.idp_part].off[y].status = 1;
+                UNLOCK
+                printf("Nave %d: caricata merce %d dal porto %d\n", barchetta.idn, merci_ric[i].id, barchetta.idp_part);
+            }
+        }
+    }
+    printf("\n\n");
+}
 
 int main (int argc, char * argv[]){
     
@@ -157,7 +167,7 @@ int main (int argc, char * argv[]){
     struct timespec rem;
     double distance;
     double route_time;
-    merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));    
+    merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
@@ -175,7 +185,7 @@ int main (int argc, char * argv[]){
     barchetta.idp_part = getpart();
     if(barchetta.idp_part != -1){
         LOCK
-        printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
+        printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
         UNLOCK
         route_time = distance / SO_SPEED;
         req.tv_sec = route_time;
@@ -192,7 +202,9 @@ int main (int argc, char * argv[]){
         
         printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
         LOCK_BAN (barchetta.idp_part);
-        sleep(2);
+        printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
+        carico();
+        printf("Nave %d: finito di caricare\n\n", barchetta.idn);
         UNLOCK_BAN (barchetta.idp_part);
     }
     /*CONTINUARE*/

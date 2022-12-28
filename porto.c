@@ -34,12 +34,6 @@ void creaPorto(){
     }while(flag);
 }
 
-
-
-
-
-
-
 void genric()
 {
     int j;int i; int x; int r;
@@ -73,8 +67,7 @@ void genric()
         
         printf("creata domanda di %d ton di merce %d a porto %d\n", sh_mem->merci[sh_mem->porti[porto_id].ric[x].id].size, sh_mem->porti[porto_id].ric[i].id,porto_id);
     }
-    printf("\n");
-    
+    printf("\n"); 
 }
 
 void genmerci()
@@ -96,6 +89,7 @@ void genmerci()
             sh_mem->porti[porto_id].off[x].size=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size;
             sh_mem->porti[porto_id].off[x].pre=false;
             sh_mem->porti[porto_id].off[x].num=rand()%MAX_NUM_LOTTI+1;
+            sh_mem->porti[porto_id].off[x].status = 0;
             break;
             }
         }        
@@ -147,7 +141,7 @@ int main(int argc, char * argv[]){
     sh_mem->porti[porto_id].coord.x = coor.x;
     sh_mem->porti[porto_id].coord.y = coor.y;
     maxbanchine=rand() % SO_BANCHINE+1;
-    semctl(bancid, porto_id, SETVAL, maxbanchine );
+    semctl(bancid, porto_id, SETVAL, maxbanchine);
 
     printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, maxbanchine);
 

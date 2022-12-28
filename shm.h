@@ -17,10 +17,12 @@
 #define S0_MAX_VITA 10
 #define SO_SPEED 30
 #define SO_CAPACITY 120
-#define SO_BANCHINE 4
+#define SO_BANCHINE 1
+#define SO_LOADSPEED 60
+
 #define LOCK_BAN(ID);   \
-sops.sem_num =ID;       \   
-sops.sem_op=-1;         \
+sops.sem_num =ID;       \
+sops.sem_op=-1;          \
 semop(bancid, &sops, 1);
 #define UNLOCK_BAN(ID); \
 sops.sem_num =ID;       \
@@ -44,7 +46,7 @@ struct coordinates{
 };
 
 struct merce {
-    int status;
+    int status; /*0: al porto, 1: su nave*/
     int id;
     int size;
     int vita;
