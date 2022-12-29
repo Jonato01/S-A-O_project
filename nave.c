@@ -155,6 +155,9 @@ void gennave()
 void carico(){
     int i;
     int y;
+    struct timespec req;
+    struct timespec rem;
+
     for(i = 0; i < MERCI_RIC_OFF; i++){
         if(merci_ric[i].id != -1){
             y = containsOff(barchetta.idp_part, merci_ric[i].id);
@@ -168,12 +171,25 @@ void carico(){
             }
         }
     }
-    printf("\n");
+
+    req.tv_sec = barchetta.carico / SO_LOADSPEED;
+    req.tv_nsec = 0;
+    rem = req;
+    if(nanosleep(&req, &rem) == -1){
+        /* GESTIRE ERRORE CON ERRNO */
+        printf("Errore nella nanosleep!\n");
+        exit(-1);
+    }
+
+    printf("Tempo di attesa: %f\n\n", barchetta.carico / SO_LOADSPEED);
 }
 
 void scarico(){
     int i;
     int y;
+    struct timespec req;
+    struct timespec rem;
+    double q = 0;
     for(i = 0; i < MERCI_RIC_OFF; i++){
         if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
             y = containsRic(barchetta.idp_dest, merci_ric[i].id);
@@ -186,11 +202,22 @@ void scarico(){
                 merci_ric[i].id = -1;
                 barchetta.carico -= merci_ric[i].size;
                 barchetta.carico_pre -= merci_ric[i].size;
+                q += merci_ric[i].size;
                 merci_ric[i].size = 0;
             }
         }
     }
-    printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n", barchetta.idn, barchetta.carico, barchetta.carico_pre);
+
+    req.tv_sec = q / SO_LOADSPEED;
+    req.tv_nsec = 0;
+    rem = req;
+    if(nanosleep(&req, &rem) == -1){
+        /* GESTIRE ERRORE CON ERRNO */
+        printf("Errore nella nanosleep!\n");
+        exit(-1);
+    }
+
+    printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f", barchetta.idn, barchetta.carico, barchetta.carico_pre, q / SO_LOADSPEED);
 }
 
 int main (int argc, char * argv[]){
@@ -214,54 +241,59 @@ int main (int argc, char * argv[]){
     ordinaporti(barchetta.coord);
     barchetta.idp_dest = getdest();
     ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
-    barchetta.idp_part = getpart();
-    if(barchetta.idp_part != -1){
-        LOCK
-        printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
-        UNLOCK
-        route_time = distance / SO_SPEED;
-        req.tv_sec = route_time;
-        req.tv_nsec = 0;
-        rem = req;
-        if(nanosleep(&req, &rem) == -1){
-            /* GESTIRE ERRORE CON ERRNO */
-            printf("Errore nella nanosleep!\n");
-            exit(-1);
+    while(barchetta.carico_pre > 0){
+        barchetta.idp_part = getpart();
+        if(barchetta.idp_part != -1){
+            LOCK
+            printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
+            UNLOCK
+            route_time = distance / SO_SPEED;
+            req.tv_sec = route_time;
+            req.tv_nsec = 0;
+            rem = req;
+            if(nanosleep(&req, &rem) == -1){
+                /* GESTIRE ERRORE CON ERRNO */
+                printf("Errore nella nanosleep!\n");
+                exit(-1);
+            }
+            LOCK
+            barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
+            UNLOCK
+            
+            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
+            LOCK_BAN (barchetta.idp_part);
+            printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
+            carico();
+            printf("Nave %d: finito di caricare\n\n", barchetta.idn);
+            UNLOCK_BAN (barchetta.idp_part);
+
+            LOCK
+            printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
+            UNLOCK
+
+            route_time = distance / SO_SPEED;
+            req.tv_sec = route_time;
+            req.tv_nsec = 0;
+            rem = req;
+            if(nanosleep(&req, &rem) == -1){
+                /* GESTIRE ERRORE CON ERRNO */
+                printf("Errore nella nanosleep!\n");
+                exit(-1);
+            }
+            LOCK
+            barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
+            UNLOCK
+
+            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, route_time);
+            LOCK_BAN (barchetta.idp_dest);
+            printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
+            scarico();
+            printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
+            UNLOCK_BAN (barchetta.idp_dest);
+        } else {
+            printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest);
+            barchetta.carico_pre = 0;
         }
-        LOCK
-        barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
-        UNLOCK
-        
-        printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
-        LOCK_BAN (barchetta.idp_part);
-        printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
-        carico();
-        printf("Nave %d: finito di caricare\n\n", barchetta.idn);
-        UNLOCK_BAN (barchetta.idp_part);
-
-        LOCK
-        printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
-        UNLOCK
-
-        route_time = distance / SO_SPEED;
-        req.tv_sec = route_time;
-        req.tv_nsec = 0;
-        rem = req;
-        if(nanosleep(&req, &rem) == -1){
-            /* GESTIRE ERRORE CON ERRNO */
-            printf("Errore nella nanosleep!\n");
-            exit(-1);
-        }
-        LOCK
-        barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
-        UNLOCK
-
-        printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, route_time);
-        LOCK_BAN (barchetta.idp_dest);
-        printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
-        scarico();
-        printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
-        UNLOCK_BAN (barchetta.idp_dest);
     }
     /*CONTINUARE*/
 
