@@ -62,6 +62,16 @@ int containsOff(int portoid, int merceid){
     return -1;
 }
 
+int containsRic(int portoid, int merceid){
+    int i;
+    for(i = 0; i < MERCI_RIC_OFF; i++){
+        if(sh_mem->porti[portoid].ric[i].id == merceid){
+            return i;
+        }
+    }
+    return -1;
+}
+
 int getpart()
 {
     int x = -1;
@@ -153,15 +163,37 @@ void carico(){
                 LOCK
                 sh_mem->porti[barchetta.idp_part].off[y].status = 1;
                 UNLOCK
+                barchetta.carico += merci_ric[i].size;
                 printf("Nave %d: caricata merce %d dal porto %d\n", barchetta.idn, merci_ric[i].id, barchetta.idp_part);
             }
         }
     }
-    printf("\n\n");
+    printf("\n");
+}
+
+void scarico(){
+    int i;
+    int y;
+    for(i = 0; i < MERCI_RIC_OFF; i++){
+        if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
+            y = containsRic(barchetta.idp_dest, merci_ric[i].id);
+            if(y != -1){
+                merci_ric[i].status = 2;
+                LOCK
+                sh_mem->porti[barchetta.idp_dest].ric[y].status = 2;
+                UNLOCK
+                printf("Nave %d: consegnata merce %d al porto %d\n", barchetta.idn, merci_ric[i].id, barchetta.idp_part);
+                merci_ric[i].id = -1;
+                barchetta.carico -= merci_ric[i].size;
+                barchetta.carico_pre -= merci_ric[i].size;
+                merci_ric[i].size = 0;
+            }
+        }
+    }
+    printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n", barchetta.idn, barchetta.carico, barchetta.carico_pre);
 }
 
 int main (int argc, char * argv[]){
-    
     int mem_id;
     struct timespec req;
     struct timespec rem;
@@ -206,6 +238,30 @@ int main (int argc, char * argv[]){
         carico();
         printf("Nave %d: finito di caricare\n\n", barchetta.idn);
         UNLOCK_BAN (barchetta.idp_part);
+
+        LOCK
+        printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
+        UNLOCK
+
+        route_time = distance / SO_SPEED;
+        req.tv_sec = route_time;
+        req.tv_nsec = 0;
+        rem = req;
+        if(nanosleep(&req, &rem) == -1){
+            /* GESTIRE ERRORE CON ERRNO */
+            printf("Errore nella nanosleep!\n");
+            exit(-1);
+        }
+        LOCK
+        barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
+        UNLOCK
+
+        printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, route_time);
+        LOCK_BAN (barchetta.idp_dest);
+        printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
+        scarico();
+        printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
+        UNLOCK_BAN (barchetta.idp_dest);
     }
     /*CONTINUARE*/
 

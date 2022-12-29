@@ -46,7 +46,7 @@ struct coordinates{
 };
 
 struct merce {
-    int status; /*0: al porto, 1: su nave*/
+    int status; /*0: al porto, 1: su nave, 2: consegnato*/
     int id;
     int size;
     int vita;
