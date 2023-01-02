@@ -11,7 +11,7 @@
 #include <sys/sem.h>
 #include "shm.h"
 #include <stdbool.h>
-#include <sys/wait.h>
+#include <sys/wait.h>   
 
 int sem_id; int mem_id; int banchine;
 struct shared_data * sh_mem;

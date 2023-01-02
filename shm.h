@@ -3,15 +3,14 @@
 #define SHM_H 
 #include <stdbool.h>
 #define NUM_SEMS 5
-#define SO_PORTI 10
-#define MAX_NUM_LOTTI 10
+#define SO_PORTI 3
 #define SO_LATO 100.00 
 #define SO_NAVI 20
 #define SO_GIORNI 30
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
 #define SO_MERCI 12
-#define MERCI_RIC_OFF 5
+#define MERCI_RIC_OFF 3
 #define SO_SIZE 100 
 #define SO_MIN_VITA 2 
 #define S0_MAX_VITA 10
@@ -19,11 +18,11 @@
 #define SO_CAPACITY 120
 #define SO_BANCHINE 1
 #define SO_LOADSPEED 60
-
+#define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3
 #define LOCK_BAN(ID);   \
 sops.sem_num =ID;       \
 sops.sem_op=-1;          \
-semop(bancid, &sops, 1);
+semop(bancid, &sops, 1); 
 #define UNLOCK_BAN(ID); \
 sops.sem_num =ID;       \
 sops.sem_op=1;          \
