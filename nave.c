@@ -157,7 +157,7 @@ void carico(){
     int y;
     struct timespec req;
     struct timespec rem;
-
+    double q; double nano;
     for(i = 0; i < MERCI_RIC_OFF; i++){
         if(merci_ric[i].id != -1){
             y = containsOff(barchetta.idp_part, merci_ric[i].id);
@@ -171,9 +171,10 @@ void carico(){
             }
         }
     }
-
-    req.tv_sec = barchetta.carico / SO_LOADSPEED;
-    req.tv_nsec = 0;
+    q=barchetta.carico/SO_LOADSPEED;
+    nano=modf(q,&q);
+    req.tv_sec = q;
+    req.tv_nsec = nano*1e9;
     rem = req;
     if(nanosleep(&req, &rem) == -1){
         /* GESTIRE ERRORE CON ERRNO */
@@ -189,7 +190,7 @@ void scarico(){
     int y;
     struct timespec req;
     struct timespec rem;
-    double q = 0;
+    double q = 0; double nano=0;
     for(i = 0; i < MERCI_RIC_OFF; i++){
         if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
             y = containsRic(barchetta.idp_dest, merci_ric[i].id);
@@ -207,9 +208,10 @@ void scarico(){
             }
         }
     }
-
-    req.tv_sec = q / SO_LOADSPEED;
-    req.tv_nsec = 0;
+    q=q/SO_LOADSPEED;
+    nano=modf(q,&q);
+    req.tv_sec = q;
+    req.tv_nsec = nano*1e9;
     rem = req;
     if(nanosleep(&req, &rem) == -1){
         /* GESTIRE ERRORE CON ERRNO */
@@ -225,7 +227,7 @@ int main (int argc, char * argv[]){
     struct timespec req;
     struct timespec rem;
     double distance;
-    double route_time;
+    double route_time; double nano;
     merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
@@ -248,8 +250,9 @@ int main (int argc, char * argv[]){
             printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
             UNLOCK
             route_time = distance / SO_SPEED;
+            nano=modf(route_time,&route_time);
             req.tv_sec = route_time;
-            req.tv_nsec = 0;
+            req.tv_nsec = nano*1e9;
             rem = req;
             if(nanosleep(&req, &rem) == -1){
                 /* GESTIRE ERRORE CON ERRNO */
@@ -272,8 +275,9 @@ int main (int argc, char * argv[]){
             UNLOCK
 
             route_time = distance / SO_SPEED;
+            nano=modf(route_time,&route_time);
             req.tv_sec = route_time;
-            req.tv_nsec = 0;
+            req.tv_nsec = nano*1e9;
             rem = req;
             if(nanosleep(&req, &rem) == -1){
                 /* GESTIRE ERRORE CON ERRNO */
