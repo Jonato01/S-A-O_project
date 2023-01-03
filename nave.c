@@ -45,10 +45,6 @@ void ordinaporti(struct coordinates coord){
         if(!swapped)
             break;
     }
-    /*for(i = 0; i < SO_PORTI; i++){
-        printf("%d ", ord[i]);
-    }
-    printf("\n");*/
 }
 
 int containsOff(int portoid, int merceid){
@@ -219,7 +215,7 @@ void scarico(){
         exit(-1);
     }
 
-    printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f", barchetta.idn, barchetta.carico, barchetta.carico_pre, q / SO_LOADSPEED);
+    printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f\n\n", barchetta.idn, barchetta.carico, barchetta.carico_pre, q / SO_LOADSPEED);
 }
 
 int main (int argc, char * argv[]){
@@ -263,7 +259,7 @@ int main (int argc, char * argv[]){
             barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
             UNLOCK
             
-            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
+            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (req.tv_sec + req.tv_nsec * 1e-9));
             LOCK_BAN (barchetta.idp_part);
             printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
             carico();
@@ -288,7 +284,7 @@ int main (int argc, char * argv[]){
             barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
             UNLOCK
 
-            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, route_time);
+            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (req.tv_sec + req.tv_nsec * 1e-9));
             LOCK_BAN (barchetta.idp_dest);
             printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
             scarico();
