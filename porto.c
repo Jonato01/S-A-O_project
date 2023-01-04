@@ -4,16 +4,34 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
+#include <strings.h>
 #include <stdbool.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include "shm.h"
-
+struct sembuf sops;
 struct shared_data * sh_mem;
 struct coordinates coor;
-int porto_id;
 
+int sem_id;
+int porto_id; 
+void handle_time(int signal)
+{
+    int i;
+    LOCK
+    for(i=0;i<MERCI_RIC_OFF;i++)
+    {
+        sh_mem->porti[porto_id].off[i].vita--;
+        if(sh_mem->porti[porto_id].off[i].vita<=0)
+        {
+            kill(sh_mem->porti[porto_id].off[i].pre,SIGALRM);
+            bzero(&sh_mem->porti[porto_id].off[i],sizeof(struct merce));
+        }
+    }
+    UNLOCK
+}
 void creaPorto(){
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
     int i;
@@ -108,11 +126,13 @@ void genmerci()
 
 int main(int argc, char * argv[]){
     int maxbanchine;
-    int mem_id;
-    int sem_id;
+    int mem_id;    
     int bancid; 
-    struct sembuf sops;
+    struct sigaction sa;
     srand(getpid());
+    bzero(&sa,sizeof(sa));
+    sa.sa_handler=SIG_IGN;
+    sigaction(SIGUSR1, &sa, NULL);
     porto_id = atoi(argv[1]);
     bancid = semget(getppid()+2,SO_PORTI,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
@@ -155,14 +175,13 @@ int main(int argc, char * argv[]){
     genmerci();
     genric();
     UNLOCK
-
+    sa.sa_handler=handle_time;
+    sigaction(SIGUSR1, &sa, NULL);
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
+    while(1)
 
-    sops.sem_num=2;
-    sops.sem_op=1;
-    semop(sem_id,&sops,1);
     shmdt ( sh_mem );
     exit(0);
 }

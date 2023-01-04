@@ -12,7 +12,7 @@
 #define SO_MERCI 12
 #define MERCI_RIC_OFF 6
 #define SO_SIZE 100 
-#define SO_MIN_VITA 2 
+#define SO_MIN_VITA 2 /*vita minima merci*/ 
 #define S0_MAX_VITA 10
 #define SO_SPEED 50
 #define SO_CAPACITY 120
@@ -53,7 +53,7 @@ struct merce {
     int size;
     int vita;
     int num;
-    bool pre;
+    int pre;
 };
 struct nave
 {

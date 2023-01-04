@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdbool.h>
+#include <signal.h>
+#include <strings.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
@@ -20,7 +22,21 @@ int bancid;
 struct nave barchetta;
 
 int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
-
+int getpart();
+void handle_time(int signal)
+{
+    int i;
+    for(i=0; i<SO_MERCI;i++)
+    {
+        if(barchetta.merci_car[i].id!=-1)
+        barchetta.merci_car[i].vita--;
+        if(barchetta.merci_car[i].vita<=0)
+        bzero(&barchetta.merci_car[i],sizeof(struct merce));
+        barchetta.merci_car[i].id--;
+        getpart();
+        printf("lanciati in mare come i negr* nel mediterraneo\n");
+    }
+}
 void swap(int* xp, int* yp)
 {
     int temp = *xp;
@@ -111,7 +127,7 @@ int getdest()
                 if(!sh_mem->porti[ord[i]].ric[j].pre && sh_mem->porti[ord[i]].ric[j].size + barchetta.carico_pre < SO_CAPACITY){
                     flag = true;
                     sh_mem->porti[ord[i]].ric[j].pre = true;
-            /*!!!j*/merci_ric[j]=sh_mem->porti[ord[i]].ric[j];
+                    merci_ric[j]=sh_mem->porti[ord[i]].ric[j];
                     merci_ric[j].pre = true;
                     nmerci++;
                     barchetta.carico_pre += sh_mem->porti[ord[i]].ric[j].size;
@@ -224,6 +240,10 @@ int main (int argc, char * argv[]){
     struct timespec rem;
     double distance;
     double route_time; double nano;
+    struct sigaction sa;
+    bzero(&sa,sizeof(sa));
+    sa.sa_handler=SIG_IGN;
+    sigaction(SIGUSR1, &sa, NULL);
     merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
@@ -235,7 +255,8 @@ int main (int argc, char * argv[]){
     /*TEST ERROR*/
 
     gennave();
-
+    sa.sa_handler=handle_time;
+    sigaction(SIGUSR1, &sa, NULL);
     ordinaporti(barchetta.coord);
     barchetta.idp_dest = getdest();
     ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
@@ -296,10 +317,7 @@ int main (int argc, char * argv[]){
         }
     }
     /*CONTINUARE*/
-
-    sops.sem_num=2;
-    sops.sem_op=1;
-    semop(sem_id,&sops,1);
+    while(1)
     shmdt ( sh_mem );
     exit(0);
 }

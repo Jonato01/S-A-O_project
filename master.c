@@ -8,19 +8,30 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <signal.h>
 #include <sys/sem.h>
 #include "shm.h"
 #include <stdbool.h>
 #include <sys/wait.h>   
-
+struct sembuf sops;
 int sem_id; int mem_id; int banchine;
 struct shared_data * sh_mem;
-struct sembuf sops;
+
 pid_t *porti;
 pid_t *navi;
 void resetSems(int sem_id);
 void genporti();
 void gennavi();
+void alarm_giorni(int signal)
+{
+    int n;
+    for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
+            if(n<SO_NAVI)
+            kill(navi[n],SIGUSR1);
+            if(n<SO_PORTI)
+            kill(porti[n],SIGUSR1);
+        }
+}
 void resetSems(int sem_id){
     int i;
     for(i = 1; i < NUM_SEMS; i++){
@@ -31,13 +42,14 @@ void resetSems(int sem_id){
 void gennavi()
 {
     int i;
+    
     char *c;
     char * argsnavi[]={NAVI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
-    
+
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
-        if(!navi[i]=fork()){
+        if(!(navi[i]=fork())){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
             execve(NAVI_PATH_NAME,argsnavi,NULL);
@@ -61,7 +73,7 @@ void genporti()
     /*creazione porti*/
     for(i = 0; i < SO_PORTI; i++){
         
-        if(!porti[i]=fork()){
+        if(!(porti[i]=fork())){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
 
@@ -78,11 +90,14 @@ void genporti()
 int main(int args,char* argv[]){
     
     int i; int n; 
-
+    struct sigaction sa;
     srand(getpid());
     navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
+    bzero(&sa,sizeof(sa));
+    sa.sa_handler= SIG_IGN;
+    sigaction(SIGALRM, &sa, NULL);
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
@@ -104,20 +119,21 @@ int main(int args,char* argv[]){
     genporti();     
     
     gennavi();
+    sa.sa_handler=alarm_giorni;
+    sigaction(SIGALRM, &sa, NULL);
     for(i=0;i<SO_GIORNI;i++){
-        sleep(1);
-        for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
+        alarm(1);
+        sleep(1);/*da togliere*/  
+    }
+    printf("fine simulazione");
+    for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
             if(n<SO_NAVI)
-            kill(navi[n],SIGUSR1);
+            kill(navi[n],SIGTERM);
             if(n<SO_PORTI)
-            kill(porti[n],SIGUSR1);
-        }    
-        
+            kill(porti[n],SIGTERM);
     }
     
-    sops.sem_num=2;
-    sops.sem_op=-(SO_PORTI+SO_NAVI+1);
-    semop(sem_id,&sops,1);
+    
     shmdt ( sh_mem );
     printf("\nDeleting shm with id %d\n",mem_id);
     shmctl(mem_id , IPC_RMID , NULL);
