@@ -18,7 +18,7 @@
 #define SO_CAPACITY 120
 #define SO_BANCHINE 1
 #define SO_LOADSPEED 200
-#define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3*SO_GIORNI
+#define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3
 
 /*blocca la banchina all'attracco*/
 #define LOCK_BAN(ID);   \
@@ -61,7 +61,6 @@ struct nave
     struct coordinates coord;
     int idp_dest;/* final destination fox only dove consegnamo */
     int idp_part;/* dove carichiamo */
-    struct merce merci_car[SO_MERCI];
     double carico;
     double carico_pre;
 };

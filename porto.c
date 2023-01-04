@@ -70,23 +70,23 @@ void genric()
             off=true;
             for(j=0; j<MERCI_RIC_OFF && off;j++)
             {
-                    if(r==sh_mem->porti[porto_id].off[j].id)
+                if(r==sh_mem->porti[porto_id].off[j].id)
                     off=false;
             }
             if(x==i && off){
-            sh_mem->porti[porto_id].ric[x].id=r;
-            sh_mem->porti[porto_id].ric[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].vita;
-            sh_mem->porti[porto_id].ric[x].size=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].size;
-            sh_mem->porti[porto_id].ric[x].pre=false;
-            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem->porti[porto_id].ric[x].size;
-            if((SO_FILL/SO_PORTI/MERCI_RIC_OFF%sh_mem->porti[porto_id].ric[x].size))
-            r++;
-            sh_mem->porti[porto_id].ric[x].num=r;
-            break;
+                sh_mem->porti[porto_id].ric[x].id=r;
+                sh_mem->porti[porto_id].ric[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].vita;
+                sh_mem->porti[porto_id].ric[x].size=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].size;
+                sh_mem->porti[porto_id].ric[x].pre=false;
+                r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem->porti[porto_id].ric[x].size;
+                if((SO_FILL/SO_PORTI/MERCI_RIC_OFF%sh_mem->porti[porto_id].ric[x].size))
+                    r++;
+                sh_mem->porti[porto_id].ric[x].num=r;
+                break;
             }
         }
         
-        printf("creata domanda di %d ton di merce %d a porto %d\n", sh_mem->porti[porto_id].ric[x].num*sh_mem->merci[sh_mem->porti[porto_id].ric[x].id].size, sh_mem->porti[porto_id].ric[i].id,porto_id);
+        printf("creata domanda di %d lotti da %d ton di merce %d a porto %d\n", sh_mem->porti[porto_id].ric[x].num, sh_mem->merci[sh_mem->porti[porto_id].ric[x].id].size, sh_mem->porti[porto_id].ric[i].id,porto_id);
     }
     printf("\n"); 
 }
@@ -108,7 +108,7 @@ void genmerci()
             sh_mem->porti[porto_id].off[x].id=r;
             sh_mem->porti[porto_id].off[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].vita;
             sh_mem->porti[porto_id].off[x].size=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size;
-            sh_mem->porti[porto_id].off[x].pre=false;
+            sh_mem->porti[porto_id].off[x].pre=0;
             
             r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem->porti[porto_id].off[x].size;
             if((SO_FILL/SO_PORTI/MERCI_RIC_OFF%sh_mem->porti[porto_id].off[x].size))
@@ -118,7 +118,7 @@ void genmerci()
             break;
             }
         }        
-        printf("create %d ton di merce %d a porto %d\n",sh_mem->porti[porto_id].off[x].num*sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size, sh_mem->porti[porto_id].off[i].id,porto_id);
+        printf("creati %d lotti da %d ton di merce %d a porto %d\n",sh_mem->porti[porto_id].off[x].num, sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size, sh_mem->porti[porto_id].off[i].id,porto_id);
     }
     printf("\n");
     
