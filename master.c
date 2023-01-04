@@ -16,6 +16,8 @@
 int sem_id; int mem_id; int banchine;
 struct shared_data * sh_mem;
 struct sembuf sops;
+pid_t *porti;
+pid_t *navi;
 void resetSems(int sem_id);
 void genporti();
 void gennavi();
@@ -35,7 +37,7 @@ void gennavi()
     
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
-        if(!fork()){
+        if(!navi[i]=fork()){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
             execve(NAVI_PATH_NAME,argsnavi,NULL);
@@ -59,7 +61,7 @@ void genporti()
     /*creazione porti*/
     for(i = 0; i < SO_PORTI; i++){
         
-        if(!fork()){
+        if(!porti[i]=fork()){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
 
@@ -75,10 +77,11 @@ void genporti()
 
 int main(int args,char* argv[]){
     
-    int i;
+    int i; int n; 
 
     srand(getpid());
-    
+    navi=calloc(SO_PORTI,sizeof(pid_t));
+    porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
@@ -101,6 +104,16 @@ int main(int args,char* argv[]){
     genporti();     
     
     gennavi();
+    for(i=0;i<SO_GIORNI;i++){
+        sleep(1);
+        for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
+            if(n<SO_NAVI)
+            kill(navi[n],SIGUSR1);
+            if(n<SO_PORTI)
+            kill(porti[n],SIGUSR1);
+        }    
+        
+    }
     
     sops.sem_num=2;
     sops.sem_op=-(SO_PORTI+SO_NAVI+1);

@@ -14,30 +14,33 @@
 #define SO_SIZE 100 
 #define SO_MIN_VITA 2 
 #define S0_MAX_VITA 10
-#define SO_SPEED 30
+#define SO_SPEED 50
 #define SO_CAPACITY 120
 #define SO_BANCHINE 1
-#define SO_LOADSPEED 60
-#define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3
+#define SO_LOADSPEED 200
+#define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3*SO_GIORNI
+
+/*blocca la banchina all'attracco*/
 #define LOCK_BAN(ID);   \
 sops.sem_num =ID;       \
-sops.sem_op=-1;          \
-semop(bancid, &sops, 1); 
-#define UNLOCK_BAN(ID); \
-sops.sem_num =ID;       \
-sops.sem_op=1;          \
-semop(bancid, &sops, 1);
+sops.sem_op=-1;         \
+semop(bancid,&sops, 1);
+ /*sblocca la banchina dopo che la nave lascia il porto*/
+#define UNLOCK_BAN(ID);     \
+sops.sem_num =ID;           \
+sops.sem_op=1;              \
+semop(bancid,&sops, 1);
 
 #define DISTANCE(a, b) sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2))
 /*0:    protezione shm  1: creazione porti in ordine 2: controllare fine di ogni figlio*/
 #define LOCK                    \
     sops.sem_num = 0;            \
     sops.sem_op = -1;            \
-    semop(sem_id, &sops, 1);
+    semop(sem_id,&sops, 1);
 #define UNLOCK                    \
     sops.sem_num = 0;            \
     sops.sem_op = 1;            \
-    semop(sem_id, &sops, 1);
+    semop(sem_id,&sops, 1);
 
 struct coordinates{
     double x;
@@ -65,6 +68,7 @@ struct nave
 
 struct porto {
     int idp;
+    
     struct coordinates coord;
     struct merce ric[MERCI_RIC_OFF];
     struct merce off[MERCI_RIC_OFF];
