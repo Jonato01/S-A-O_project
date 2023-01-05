@@ -17,6 +17,19 @@ struct coordinates coor;
 
 int sem_id;
 int porto_id; 
+void handle_morte(int signal)
+{
+    
+    LOCK
+    sops.sem_num = 2;            
+    sops.sem_op = 1;            
+    semop(sem_id,&sops, 1);
+    UNLOCK
+    shmdt ( sh_mem );
+    exit(0);
+
+
+}
 void handle_time(int signal)
 {
     int i;
@@ -132,6 +145,7 @@ int main(int argc, char * argv[]){
     srand(getpid());
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
+    /*sigaction(SIGINT, &sa, NULL);*/
     sigaction(SIGUSR1, &sa, NULL);
     porto_id = atoi(argv[1]);
     bancid = semget(getppid()+2,SO_PORTI,0600);
@@ -177,11 +191,12 @@ int main(int argc, char * argv[]){
     UNLOCK
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
+
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
-    while(1)
+    sa.sa_handler=handle_morte;
+    sigaction(SIGINT, &sa, NULL);    
+    while(1);
 
-    shmdt ( sh_mem );
-    exit(0);
-}
+    }

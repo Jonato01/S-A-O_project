@@ -25,6 +25,16 @@ struct timespec rem;
 
 int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
 int getpart();
+void handle_morte(int signal){
+    LOCK
+    sops.sem_num = 2;            
+    sops.sem_op = 1;            
+    semop(sem_id,&sops, 1);
+    UNLOCK
+    shmdt ( sh_mem );
+    exit(0);
+
+}
 void handle_time(int signal)
 {
     int i;
@@ -176,6 +186,9 @@ void gennave()
     sops.sem_num=1;
     sops.sem_op=1;
     semop(sem_id,&sops,1);
+    sops.sem_num=2;
+    sops.sem_op=-1;
+    semop(sem_id,&sops,1);
 }
 
 void carico(){
@@ -262,6 +275,7 @@ int main (int argc, char * argv[]){
     struct sigaction sa;
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
+    /*sigaction(SIGINT, &sa, NULL);*/
     sigaction(SIGUSR1, &sa, NULL);
     merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
@@ -273,7 +287,9 @@ int main (int argc, char * argv[]){
     sh_mem = shmat(mem_id, NULL, 0);
     /*TEST ERROR*/
 
-    gennave();
+    gennave();            
+    sa.sa_handler=handle_morte;
+    sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
     ordinaporti(barchetta.coord);
@@ -282,9 +298,7 @@ int main (int argc, char * argv[]){
     while(barchetta.carico_pre > 0){
         barchetta.idp_part = getpart();
         if(barchetta.idp_part != -1){
-            LOCK
             printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
-            UNLOCK
             route_time = distance / SO_SPEED;
             nano=modf(route_time,&route_time);
             rem.tv_sec = route_time;
@@ -336,7 +350,5 @@ int main (int argc, char * argv[]){
         }
     }
     /*CONTINUARE*/
-    while(1)
-    shmdt ( sh_mem );
-    exit(0);
+    while(1);
 }

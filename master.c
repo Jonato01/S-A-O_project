@@ -20,8 +20,28 @@ struct shared_data * sh_mem;
 pid_t *porti;
 pid_t *navi;
 void resetSems(int sem_id);
+void fine_sim(int signal);
 void genporti();
 void gennavi();
+void fine_sim(int signal)
+{
+    int n;
+    for(n=0;n<SO_NAVI || n<SO_PORTI;n++)
+        {
+            if(n<SO_NAVI)
+            kill(navi[n],SIGINT);
+            if(n<SO_PORTI)
+            kill(porti[n],SIGINT);
+        }
+
+    shmdt ( sh_mem );
+    printf("\nDeleting shm with id %d\n",mem_id);
+    shmctl(mem_id , IPC_RMID , NULL);
+    printf("Deleting sem with id %d\n",sem_id);
+    semctl(sem_id, 0, IPC_RMID);
+    semctl(banchine, 0, IPC_RMID);
+    exit(0);
+}
 void alarm_giorni(int signal)
 {
     int n;
@@ -35,7 +55,7 @@ void alarm_giorni(int signal)
 void resetSems(int sem_id){
     int i;
     for(i = 1; i < NUM_SEMS; i++){
-        semctl(sem_id, i, SETVAL, 1);
+        semctl(sem_id, i, SETVAL, 0);
     }
 }
 
@@ -84,12 +104,13 @@ void genporti()
         sops.sem_num=1;
         sops.sem_op=-1;
         semop(sem_id,&sops,1);
+        
     }
 }
 
 int main(int args,char* argv[]){
     
-    int i; int n; 
+    int i;
     struct sigaction sa;
     srand(getpid());
     navi=calloc(SO_PORTI,sizeof(pid_t));
@@ -119,27 +140,26 @@ int main(int args,char* argv[]){
     genporti();     
     
     gennavi();
+    sops.sem_num = 2;            
+    sops.sem_op = SO_NAVI+1;            
+    semop(sem_id,&sops, 1);
     sa.sa_handler=alarm_giorni;
     sigaction(SIGALRM, &sa, NULL);
-    for(i=0;i<SO_GIORNI;i++){
-        alarm(1);
-        sleep(1);/*da togliere*/  
+    sa.sa_handler=fine_sim;
+    sigaction(SIGINT, &sa, NULL);
+    
+    
+    for(i=0;i<=SO_GIORNI;i++){
+        if(i==SO_GIORNI)
+        {
+            sa.sa_handler=fine_sim;
+            sigaction(SIGALRM, &sa, NULL);
+        }
+        alarm(i+1);
+        
     }
-    printf("fine simulazione");
-    for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
-            if(n<SO_NAVI)
-            kill(navi[n],SIGTERM);
-            if(n<SO_PORTI)
-            kill(porti[n],SIGTERM);
-    }
     
     
-    shmdt ( sh_mem );
-    printf("\nDeleting shm with id %d\n",mem_id);
-    shmctl(mem_id , IPC_RMID , NULL);
-    printf("Deleting sem with id %d\n",sem_id);
-    semctl(sem_id, 0, IPC_RMID);
-    semctl(banchine, 0, IPC_RMID);
     
-    return 0;
+    while(1);
 }
