@@ -33,13 +33,18 @@ void handle_morte(int signal)
 void handle_time(int signal)
 {
     int i;
+    int j;
     LOCK
     for(i=0;i<MERCI_RIC_OFF;i++)
     {
         sh_mem->porti[porto_id].off[i].vita--;
-        if(sh_mem->porti[porto_id].off[i].vita<=0)
+        if(sh_mem->porti[porto_id].off[i].vita==0)
         {
-            kill(sh_mem->porti[porto_id].off[i].pre,SIGALRM);
+            for(j = 0; j < SO_NAVI; j++){
+                if(sh_mem->porti[porto_id].off[i].pid_navi[j] != 0 && sh_mem->porti[porto_id].off[i].pre == 1){
+                    kill(sh_mem->porti[porto_id].off[i].pid_navi[j],SIGALRM);
+                }
+            }
             bzero(&sh_mem->porti[porto_id].off[i],sizeof(struct merce));
         }
     }
@@ -131,7 +136,7 @@ void genmerci()
             break;
             }
         }        
-        printf("creati %d lotti da %d ton di merce %d a porto %d\n",sh_mem->porti[porto_id].off[x].num, sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size, sh_mem->porti[porto_id].off[i].id,porto_id);
+        printf("creati %d lotti da %d ton di merce %d a porto %d (vita: %d giorni)\n",sh_mem->porti[porto_id].off[x].num, sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size, sh_mem->porti[porto_id].off[i].id,porto_id, sh_mem->porti[porto_id].off[i].vita);
     }
     printf("\n");
     
