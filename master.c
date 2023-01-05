@@ -150,14 +150,11 @@ int main(int args,char* argv[]){
     
     
     for(i=0;i<=SO_GIORNI;i++){
-        if(i==SO_GIORNI)
-        {
-            sa.sa_handler=fine_sim;
-            sigaction(SIGALRM, &sa, NULL);
-        }
-        alarm(i+1);
         
+        alarm(i+1);
+        sleep(1);    
     }
+    raise(SIGINT);
     
     
     
