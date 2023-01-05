@@ -151,7 +151,7 @@ int main(int args,char* argv[]){
     
     for(i=0;i<=SO_GIORNI;i++){
         
-        alarm(i+1);
+        alarm(1);
         sleep(1);    
     }
     raise(SIGINT);
