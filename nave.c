@@ -35,14 +35,16 @@ void handle_time(int signal)
                 merci_ric[i].vita--;
                 if(merci_ric[i].vita<=0){
                     printf("Nave %d: merce %d scaduta!\n", barchetta.idn, merci_ric[i].id);
-                    bzero(&merci_ric[i],sizeof(struct merce));
-                    merci_ric[i].id--;
-                    getpart();
+                    barchetta.carico -= merci_ric[i].size * merci_ric[i].pre;
+                    merci_ric[i].pre = 0;
+                    merci_ric[i].size = 0;
+                    merci_ric[i].status = 3;
                 }
             }
         }
     }
 }
+
 void swap(int* xp, int* yp)
 {
     int temp = *xp;
@@ -97,21 +99,27 @@ int getpart()
     int i;
     int j;
     int q;
+    int pid = 0;
     bool flag = false;
     LOCK   
     for(i = 0; i < SO_PORTI; i++){
         for(j = 0; j < MERCI_RIC_OFF; j++){
-                y = containsOff(ord[i], merci_ric[j].id);
-                if((y > -1) && (sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre >= merci_ric[j].pre) && (merci_ric[j].pre)){
-                    flag = true;
-                    q = merci_ric[j].pre;
-                    while(sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre >= q && q){
-                        sh_mem->porti[ord[i]].off[y].pre++;
-                        q--;
-                    }
-                    printf("Nave %d: prenotati %d lotti di merce %d da caricare al porto %d (carico)\n", barchetta.idn, merci_ric[j].pre, sh_mem->porti[ord[i]].off[y].id, ord[i]);
+            y = containsOff(ord[i], merci_ric[j].id);
+            if((y > -1) && (sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre >= merci_ric[j].pre) && (merci_ric[j].pre)){
+                flag = true;
+                q = merci_ric[j].pre;
+                while(sh_mem->porti[ord[i]].off[y].pid_navi[pid] != 0){
+                    pid++;
                 }
+                sh_mem->porti[ord[j]].off[y].pid_navi[pid] = getpid();
+                pid = 0;
+                while(sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre >= q && q){
+                    sh_mem->porti[ord[i]].off[y].pre++;
+                    q--;
+                }
+                printf("Nave %d: prenotati %d lotti di merce %d da caricare al porto %d (carico)\n", barchetta.idn, merci_ric[j].pre, sh_mem->porti[ord[i]].off[y].id, ord[i]);
             }
+        }
         
         if(flag){
             x = ord[i];
@@ -299,7 +307,7 @@ int main (int argc, char * argv[]){
             barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
             UNLOCK
             
-            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
+            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, route_time);
             LOCK_BAN (barchetta.idp_part);
             printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
             carico();
@@ -324,7 +332,7 @@ int main (int argc, char * argv[]){
             barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
             UNLOCK
 
-            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
+            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, route_time);
             LOCK_BAN (barchetta.idp_dest);
             printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
             scarico();

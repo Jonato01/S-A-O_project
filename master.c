@@ -128,9 +128,9 @@ int main(int args,char* argv[]){
     printf("fine simulazione");
     for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
             if(n<SO_NAVI)
-            kill(navi[n],SIGTERM);
+                kill(navi[n],SIGTERM);
             if(n<SO_PORTI)
-            kill(porti[n],SIGTERM);
+                kill(porti[n],SIGTERM);
     }
     
     
