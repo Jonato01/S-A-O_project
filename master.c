@@ -110,7 +110,7 @@ void genporti()
 
 int main(int args,char* argv[]){
     
-    int i;
+    int i; int n;
     struct sigaction sa;
     srand(getpid());
     navi=calloc(SO_PORTI,sizeof(pid_t));
@@ -145,20 +145,6 @@ int main(int args,char* argv[]){
     semop(sem_id,&sops, 1);
     sa.sa_handler=alarm_giorni;
     sigaction(SIGALRM, &sa, NULL);
-<<<<<<< HEAD
-    sa.sa_handler=fine_sim;
-    sigaction(SIGINT, &sa, NULL);
-    
-    
-    for(i=0;i<=SO_GIORNI;i++){
-        if(i==SO_GIORNI)
-        {
-            sa.sa_handler=fine_sim;
-            sigaction(SIGALRM, &sa, NULL);
-        }
-        alarm(i+1);
-        
-=======
     for(i=0;i<SO_GIORNI;i++){
         alarm(1);
         sleep(1);/*da togliere*/  
@@ -169,7 +155,6 @@ int main(int args,char* argv[]){
                 kill(navi[n],SIGTERM);
             if(n<SO_PORTI)
                 kill(porti[n],SIGTERM);
->>>>>>> 42c8f3540a480a67d48b27fce2062b2661df18be
     }
     
     

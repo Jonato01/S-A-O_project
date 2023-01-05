@@ -5,13 +5,8 @@
 #define NUM_SEMS 5
 #define SO_PORTI 10
 #define SO_LATO 100.00 
-<<<<<<< HEAD
-#define SO_NAVI 20
-#define SO_GIORNI 10
-=======
 #define SO_NAVI 1
-#define SO_GIORNI 30
->>>>>>> 42c8f3540a480a67d48b27fce2062b2661df18be
+#define SO_GIORNI 10
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
 #define SO_MERCI 12
