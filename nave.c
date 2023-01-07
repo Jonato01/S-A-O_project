@@ -24,7 +24,7 @@ struct nave barchetta;
 struct timespec rem;
 
 int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
-int getpart();
+
 void handle_morte(int signal){
     LOCK
     sops.sem_num = 2;            
@@ -35,6 +35,7 @@ void handle_morte(int signal){
     exit(0);
 
 }
+
 void handle_time(int signal)
 {
     int i;
@@ -46,9 +47,8 @@ void handle_time(int signal)
                 if(merci_ric[i].vita<=0){
                     printf("Nave %d: merce %d scaduta!\n", barchetta.idn, merci_ric[i].id);
                     barchetta.carico -= merci_ric[i].size * merci_ric[i].pre;
-                    merci_ric[i].pre = 0;
-                    merci_ric[i].size = 0;
-                    merci_ric[i].status = 3;
+                    merci_ric[i].num = 0;
+                    merci_ric[i].status = 0;
                 }
             }
         }
@@ -111,25 +111,29 @@ int getpart()
     int q;
     int pid = 0;
     bool flag = false;
-    LOCK   
+    LOCK
     for(i = 0; i < SO_PORTI; i++){
         for(j = 0; j < MERCI_RIC_OFF; j++){
-                y = containsOff(ord[i], merci_ric[j].id);
-                if((y > -1) && (sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre >= merci_ric[j].pre) && (merci_ric[j].pre)){
-                    flag = true;
-                    q = merci_ric[j].pre;
-                    while(sh_mem->porti[ord[i]].off[y].pid_navi[pid] != 0){
-                        pid++;
-                    }
-                    sh_mem->porti[ord[j]].off[y].pid_navi[pid] = getpid();
-                    pid = 0;
-                    while(sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre >= q && q){
-                        sh_mem->porti[ord[i]].off[y].pre++;
-                        q--;
-                    }
-                    printf("Nave %d: prenotati %d lotti di merce %d da caricare al porto %d (carico)\n", barchetta.idn, merci_ric[j].pre, sh_mem->porti[ord[i]].off[y].id, ord[i]);
+            y = containsOff(ord[i], merci_ric[j].id);
+            if((y > -1) && (sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
+                flag = true;
+                q = merci_ric[j].pre;
+
+                while(sh_mem->porti[ord[i]].off[y].pid_navi[pid] != 0){
+                    pid++;
                 }
+                sh_mem->porti[ord[j]].off[y].pid_navi[pid] = getpid();
+                pid = 0;
+
+                while(q > 0 && sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre > 0){
+                    sh_mem->porti[ord[i]].off[y].pre++;
+                    q--;
+                }
+                q = merci_ric[j].pre - q;
+                printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem->porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]);
+                merci_ric[j].pre = q;
             }
+        }
         
         if(flag){
             x = ord[i];
@@ -260,7 +264,7 @@ void scarico(){
                     t++;
                 }
                 merci_ric[i].size = 0;
-                printf("Nave %d: consegnati %d lotti di merce %d al porto %d\n", barchetta.idn, t, merci_ric[i].id, barchetta.idp_part);
+                printf("Nave %d: consegnati %d lotti di merce %d al porto %d\n", barchetta.idn, t, merci_ric[i].id, barchetta.idp_dest);
                 merci_ric[i].id = -1;
             }
         }
@@ -282,6 +286,7 @@ void scarico(){
 
 int main (int argc, char * argv[]){
     int mem_id;
+    int i;
     double distance;
     double route_time; double nano;
     struct sigaction sa;
@@ -300,13 +305,17 @@ int main (int argc, char * argv[]){
     /*TEST ERROR*/
 
     gennave();
+
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
+
     ordinaporti(barchetta.coord);
     barchetta.idp_dest = getdest();
+
     ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
+
     while(barchetta.carico_pre > 0){
         barchetta.idp_part = getpart();
         if(barchetta.idp_part != -1){
@@ -358,6 +367,11 @@ int main (int argc, char * argv[]){
             scarico();
             printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
             UNLOCK_BAN (barchetta.idp_dest);
+
+            for(i = 0; i < MERCI_RIC_OFF; i++){
+                printf("%d ton di %d + ", merci_ric[i].size, merci_ric[i].id);
+            }
+            printf("\n");
         } else {
             printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest);
             barchetta.carico_pre = 0;

@@ -46,6 +46,7 @@ void handle_time(int signal)
                 }
             }
             bzero(&sh_mem->porti[porto_id].off[i],sizeof(struct merce));
+            /*Far scadere bene le merci*/
         }
     }
     UNLOCK

@@ -12,10 +12,10 @@
 #define SO_MERCI 12
 #define MERCI_RIC_OFF 6
 #define SO_SIZE 100 
-#define SO_MIN_VITA 2 /*vita minima merci*/ 
-#define S0_MAX_VITA 5
+#define SO_MIN_VITA 3 /*vita minima merci*/ 
+#define S0_MAX_VITA 10
 #define SO_SPEED 50
-#define SO_CAPACITY 1000
+#define SO_CAPACITY 120
 #define SO_BANCHINE 4
 #define SO_LOADSPEED 200
 #define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3
@@ -48,7 +48,7 @@ struct coordinates{
 };
 
 struct merce {
-    int status; /*0: al porto, 1: su nave, 2: consegnato, 3: scaduta*/
+    int status; /*0: al porto, 1: su nave, 2: consegnato, 3: scaduta in porto*/
     int id;
     int size;
     int vita;
