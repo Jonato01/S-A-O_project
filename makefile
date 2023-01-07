@@ -1,4 +1,4 @@
-CFLAGS=-Wall -std=c89 -pedantic 
+CFLAGS=-Wall -std=c89 -Wpedantic 
 OPTIONS=
 
 
