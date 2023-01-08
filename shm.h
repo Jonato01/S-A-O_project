@@ -6,14 +6,14 @@
 #define SO_PORTI 10
 #define SO_LATO 100.00 
 #define SO_NAVI 1
-#define SO_GIORNI 10
+#define SO_GIORNI 30
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
 #define SO_MERCI 12
 #define MERCI_RIC_OFF 6
 #define SO_SIZE 100 
-#define SO_MIN_VITA 3 /*vita minima merci*/ 
-#define S0_MAX_VITA 10
+#define SO_MIN_VITA 30 /*vita minima merci*/ 
+#define S0_MAX_VITA 30
 #define SO_SPEED 50
 #define SO_CAPACITY 120
 #define SO_BANCHINE 4

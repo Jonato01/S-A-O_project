@@ -153,6 +153,7 @@ int getdest()
     int i;
     int j;
     bool flag = false;
+    ordinaporti(barchetta.coord);
     LOCK
     if(barchetta.carico_pre < SO_CAPACITY){
         for(i = 0; i < SO_PORTI; i++){
@@ -311,70 +312,71 @@ int main (int argc, char * argv[]){
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
 
-    ordinaporti(barchetta.coord);
-    barchetta.idp_dest = getdest();
+    while((barchetta.idp_dest = getdest()) != -1){
 
-    ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
+        ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
 
-    while(barchetta.carico_pre > 0){
-        barchetta.idp_part = getpart();
-        if(barchetta.idp_part != -1){
-            LOCK
-            printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
-            UNLOCK
-            route_time = distance / SO_SPEED;
-            nano=modf(route_time,&route_time);
-            rem.tv_sec = route_time;
-            rem.tv_nsec = nano*1e9;
-            while(nanosleep(&rem, &rem) == -1){
-                if(errno = SIGUSR1)
-                printf("Oh no! Anyway...\n");   
-            else
-                printf("Excuse me, what the fuck!?\n");
-            }
-            LOCK
-            barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
-            UNLOCK
-            
-            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
-            LOCK_BAN (barchetta.idp_part);
-            printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
-            carico();
-            printf("Nave %d: finito di caricare\n\n", barchetta.idn);
-            UNLOCK_BAN (barchetta.idp_part);
-
-            LOCK
-            printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
-            UNLOCK
-
-            route_time = distance / SO_SPEED;
-            nano=modf(route_time,&route_time);
-            rem.tv_sec = route_time;
-            rem.tv_nsec = nano*1e9;
-            while(nanosleep(&rem, &rem) == -1){
-                if(errno = SIGUSR1)
+        while(barchetta.carico_pre > 0){
+            barchetta.idp_part = getpart();
+            if(barchetta.idp_part != -1){
+                LOCK
+                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
+                UNLOCK
+                route_time = distance / SO_SPEED;
+                nano=modf(route_time,&route_time);
+                rem.tv_sec = route_time;
+                rem.tv_nsec = nano*1e9;
+                while(nanosleep(&rem, &rem) == -1){
+                    if(errno = SIGUSR1)
                     printf("Oh no! Anyway...\n");   
                 else
                     printf("Excuse me, what the fuck!?\n");
-            }
-            LOCK
-            barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
-            UNLOCK
+                }
+                LOCK
+                barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
+                UNLOCK
+                
+                printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
+                LOCK_BAN (barchetta.idp_part);
+                printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
+                carico();
+                printf("Nave %d: finito di caricare\n\n", barchetta.idn);
+                UNLOCK_BAN (barchetta.idp_part);
 
-            printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
-            LOCK_BAN (barchetta.idp_dest);
-            printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
-            scarico();
-            printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
-            UNLOCK_BAN (barchetta.idp_dest);
+                LOCK
+                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
+                UNLOCK
 
-            for(i = 0; i < MERCI_RIC_OFF; i++){
-                printf("%d ton di %d + ", merci_ric[i].size, merci_ric[i].id);
+                route_time = distance / SO_SPEED;
+                nano=modf(route_time,&route_time);
+                rem.tv_sec = route_time;
+                rem.tv_nsec = nano*1e9;
+                while(nanosleep(&rem, &rem) == -1){
+                    if(errno = SIGUSR1)
+                        printf("Oh no! Anyway...\n");   
+                    else
+                        printf("Excuse me, what the fuck!?\n");
+                }
+                LOCK
+                barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
+                UNLOCK
+
+                printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
+                LOCK_BAN (barchetta.idp_dest);
+                printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
+                scarico();
+                printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
+                UNLOCK_BAN (barchetta.idp_dest);
+
+                printf("Ancora prenotate: ");
+                for(i = 0; i < MERCI_RIC_OFF; i++){
+                    printf("%d ton di %d + ", merci_ric[i].size * merci_ric[i].num, merci_ric[i].id);
+                }
+                printf("\n");
+            } else {
+                printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest);
+                barchetta.carico_pre = 0;
             }
-            printf("\n");
-        } else {
-            printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest);
-            barchetta.carico_pre = 0;
         }
     }
     /*CONTINUARE*/
