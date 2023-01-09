@@ -11,6 +11,7 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include "shm.h"
+#include "var.h"
 struct sembuf sops;
 struct shared_data * sh_mem;
 struct coordinates coor;
