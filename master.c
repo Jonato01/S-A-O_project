@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <sys/sem.h>
 #include "shm.h"
+#include "var.h"
 #include <stdbool.h>
 #include <sys/wait.h>   
 struct sembuf sops;
@@ -114,9 +115,11 @@ int main(int args,char* argv[]){
     int i;
     struct sigaction sa;
     srand(getpid());
+    setvar();
     navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
+    
     bzero(&sa,sizeof(sa));
     sa.sa_handler= SIG_IGN;
     sigaction(SIGALRM, &sa, NULL);

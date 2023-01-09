@@ -1,0 +1,14 @@
+so_porti 10
+so_navi 1
+so_banchine 4
+so_capacity 120
+so_fill 150
+so_giorni 30
+so_lato 100.00
+so_loadspeed 200
+so_max_vita 30
+so_merci 12
+so_min_vita 20
+so_size 100
+so_speed 50
+merci_ric_off 6

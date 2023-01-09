@@ -2,10 +2,9 @@
 #ifndef SHM_H
 #define SHM_H 
 #include <stdbool.h>
+#include "var.h"
 #define NUM_SEMS 5
-#define SO_PORTI 10
 #define SO_LATO 100.00 
-#define SO_NAVI 1
 #define SO_GIORNI 30
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
