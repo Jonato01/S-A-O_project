@@ -19,6 +19,7 @@ struct shared_data * sh_mem;
 
 pid_t *porti;
 pid_t *navi;
+pid_t meteo;
 void resetSems(int sem_id);
 void fine_sim(int signal);
 void genporti();
@@ -26,13 +27,13 @@ void gennavi();
 void fine_sim(int signal)
 {
     int n;
-    for(n=0;n<SO_NAVI || n<SO_PORTI;n++)
-        {
-            if(n<SO_NAVI)
-            kill(navi[n],SIGINT);
-            if(n<SO_PORTI)
-            kill(porti[n],SIGINT);
-        }
+    for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
+        if(n<SO_NAVI)
+        kill(navi[n],SIGINT);
+        if(n<SO_PORTI)
+        kill(porti[n],SIGINT);
+    }
+
 
     shmdt ( sh_mem );
     printf("\nDeleting shm with id %d\n",mem_id);
