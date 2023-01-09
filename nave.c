@@ -321,6 +321,7 @@ int main (int argc, char * argv[]){
             if(barchetta.idp_part != -1){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
+                sh_mem->navi_in_transito[barchetta.idn] = getpid();
                 UNLOCK
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
@@ -334,6 +335,7 @@ int main (int argc, char * argv[]){
                 }
                 LOCK
                 barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
+                sh_mem->navi_in_transito[barchetta.idn] = 0;
                 UNLOCK
                 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
@@ -345,6 +347,7 @@ int main (int argc, char * argv[]){
 
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
+                sh_mem->navi_in_transito[barchetta.idn] = getpid();
                 UNLOCK
 
                 route_time = distance / SO_SPEED;
@@ -359,6 +362,7 @@ int main (int argc, char * argv[]){
                 }
                 LOCK
                 barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
+                sh_mem->navi_in_transito[barchetta.idn] = 0;
                 UNLOCK
 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));

@@ -77,7 +77,8 @@ struct porto {
 
 struct shared_data {
     struct merce merci[SO_MERCI];
-    struct porto porti[SO_PORTI];    
+    struct porto porti[SO_PORTI];
+    pid_t navi_in_transito[SO_NAVI];
 };
 
 
