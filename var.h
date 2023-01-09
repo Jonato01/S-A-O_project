@@ -21,8 +21,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #define SO_PORTI getporti()
-#define SO_NAVI so_navi
-int so_porti;int so_navi;int so_size;
+#define SO_NAVI 5
+int so_porti=0;int so_navi;int so_size;
 int so_merci;int so_capacity;int so_speed;
 int so_banchine; int so_fill; int so_loadspeed;
 double so_lato; int so_giorni; int merci_ric_off;

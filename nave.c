@@ -23,7 +23,7 @@ int bancid;
 struct nave barchetta;
 struct timespec rem;
 
-int ord[SO_PORTI]; /* ID porti in ordine di distanza*/
+int *ord; /* ID porti in ordine di distanza*/
 
 void handle_morte(int signal){
     LOCK
@@ -293,6 +293,7 @@ int main (int argc, char * argv[]){
     struct sigaction sa;
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
+    ord=calloc(SO_PORTI,sizeof(int));
     /*sigaction(SIGINT, &sa, NULL);*/
     sigaction(SIGUSR1, &sa, NULL);
     merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  

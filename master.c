@@ -116,6 +116,7 @@ int main(int args,char* argv[]){
     struct sigaction sa;
     srand(getpid());
     setvar();
+    sh_mem=malloc(sizeof(int)*6*SO_MERCI+sizeof(pid_t)*SO_NAVI*SO_MERCI+(sizeof(int)+sizeof(double)*2+(sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*merci_ric_off*2)*SO_PORTI+sizeof(pid_t)*SO_NAVI);
     navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
@@ -126,7 +127,7 @@ int main(int args,char* argv[]){
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
-    mem_id = shmget (getpid(), sizeof(*sh_mem), 0600 | IPC_CREAT );
+    mem_id = shmget (getpid(), sizeof(int)*6*SO_MERCI+sizeof(pid_t)*SO_NAVI*SO_MERCI+(sizeof(int)+sizeof(double)*2+(sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*merci_ric_off*2)*SO_PORTI+sizeof(pid_t)*SO_NAVI, 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id, NULL, 0);    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", mem_id, sem_id);
     

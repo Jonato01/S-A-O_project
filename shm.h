@@ -53,7 +53,7 @@ struct merce {
     int vita;
     int num;
     int pre;
-    pid_t pid_navi[SO_NAVI];
+    pid_t *pid_navi;
 };
 struct nave
 {
@@ -69,15 +69,15 @@ struct porto {
     int idp;
     
     struct coordinates coord;
-    struct merce ric[MERCI_RIC_OFF];
-    struct merce off[MERCI_RIC_OFF];
+    struct merce *ric;
+    struct merce *off;
 };
 
 
 struct shared_data {
-    struct merce merci[SO_MERCI];
-    struct porto porti[SO_PORTI];
-    pid_t navi_in_transito[SO_NAVI];
+    struct merce * merci;
+    struct porto *porti;
+    pid_t *navi_in_transito;
 };
 
 
