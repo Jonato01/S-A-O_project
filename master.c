@@ -112,7 +112,7 @@ void genporti()
 
 int main(int args,char* argv[]){
     
-    int i; char *sh;
+    int i; void *sh;
     struct sigaction sa;
     srand(getpid());
     /*setvar();*/
