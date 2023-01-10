@@ -146,8 +146,8 @@ void genmerci()
 
 int main(int argc, char * argv[]){
     int maxbanchine;
-    int mem_id;    
-    int bancid; 
+    int mem_id; int i;
+    int bancid; void *sh; 
     struct sigaction sa;
     srand(getpid());
     bzero(&sa,sizeof(sa));
@@ -157,8 +157,23 @@ int main(int argc, char * argv[]){
     porto_id = atoi(argv[1]);
     bancid = semget(getppid()+2,SO_PORTI,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
-    mem_id = shmget(getppid(), sizeof(*sh_mem), 0600);
-    sh_mem = shmat(mem_id, NULL, 0);
+    mem_id = shmget (getpid(),sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI, 0600  );
+    sh = shmat(mem_id, NULL, 0);
+    sh_mem=(struct shared_data*) sh;
+    sh+=sizeof(struct shared_data*);
+    sh_mem->merci=(struct merce*) sh;
+    sh+=sizeof(struct merce*)*SO_MERCI;
+    sh_mem->navi_in_transito=(pid_t*) sh;
+    sh+=sizeof(pid_t)*SO_NAVI;
+    sh_mem->porti=(struct porto*)sh;
+    sh+=sizeof(struct porto*)*SO_PORTI;
+    for(i=0;i<SO_PORTI;i++)
+    {
+        sh_mem->porti[i].ric=(struct merce*)sh;
+        sh+=sizeof(struct merce*)*MERCI_RIC_OFF;
+        sh_mem->porti[i].off=(struct merce*)sh;
+        sh+=sizeof(struct merce*)*MERCI_RIC_OFF;
+    }
     LOCK
     sh_mem->porti[porto_id].idp=porto_id;
     UNLOCK
