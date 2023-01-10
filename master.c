@@ -146,8 +146,8 @@ int main(int args,char* argv[]){
     mem_id = shmget (getpid(),sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI, 0600 | IPC_CREAT );
     sh = shmat(mem_id, NULL, 0);
     sh_mem=(struct shared_data*) sh;
-    sh+=sizeof(struct shared_data*);
-    sh_mem->merci=(struct merce*) sh;
+    /*sh+=sizeof(struct shared_data*);*/
+    sh_mem->merci=(struct merce*) sh+sizeof(struct shared_data);
     sh+=sizeof(struct merce*)*SO_MERCI;
     sh_mem->navi_in_transito=(pid_t*) sh;
     sh+=sizeof(pid_t*)*SO_NAVI;
@@ -161,7 +161,6 @@ int main(int args,char* argv[]){
         sh+=sizeof(struct merce*)*MERCI_RIC_OFF;
     }    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", mem_id, sem_id);
-    printf("merci create correttamente");
     /*creazione merci*/
     LOCK
     for(i=0;i<SO_MERCI;i++)
