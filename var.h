@@ -20,8 +20,8 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#define SO_PORTI getporti()
-#define SO_NAVI 5
+#define SO_PORTI 6
+#define SO_NAVI 10
 int so_porti;int so_navi;int so_size;
 int so_merci;int so_capacity;int so_speed;
 int so_banchine; int so_fill; int so_loadspeed;
