@@ -112,7 +112,7 @@ void genporti()
 
 int main(int args,char* argv[]){
     
-    int i; void *sh;
+    int i; char *sh;
     struct sigaction sa;
     srand(getpid());
     /*setvar();*/
@@ -145,20 +145,20 @@ int main(int args,char* argv[]){
     resetSems(sem_id);
     mem_id = shmget (getpid(),sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI, 0600 | IPC_CREAT );
     sh = shmat(mem_id, NULL, 0);
-    sh_mem=(struct shared_data*) sh;
-    /*sh+=sizeof(struct shared_data*);*/
-    sh_mem->merci=(struct merce*) sh+sizeof(struct shared_data);
-    sh+=sizeof(struct merce*)*SO_MERCI;
+    sh_mem=(struct shared_data*)sh;
+    sh+=sizeof(struct shared_data);
+    sh_mem->merci=(struct merce*) sh;
+    sh+=sizeof(struct merce)*SO_MERCI;
     sh_mem->navi_in_transito=(pid_t*) sh;
     sh+=sizeof(pid_t*)*SO_NAVI;
     sh_mem->porti=(struct porto*)sh;
-    sh+=sizeof(struct porto*)*SO_PORTI;
+    sh+=sizeof(struct porto)*SO_PORTI;
     for(i=0;i<SO_PORTI;i++)
     {
         sh_mem->porti[i].ric=(struct merce*)sh;
-        sh+=sizeof(struct merce*)*MERCI_RIC_OFF;
+        sh+=sizeof(struct merce)*MERCI_RIC_OFF;
         sh_mem->porti[i].off=(struct merce*)sh;
-        sh+=sizeof(struct merce*)*MERCI_RIC_OFF;
+        sh+=sizeof(struct merce)*MERCI_RIC_OFF;
     }    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", mem_id, sem_id);
     /*creazione merci*/
@@ -172,7 +172,7 @@ int main(int args,char* argv[]){
     }
     
     UNLOCK
-
+    printf("ciao");
     genporti();     
     
     gennavi();
