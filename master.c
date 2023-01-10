@@ -116,7 +116,7 @@ int main(int args,char* argv[]){
     struct sigaction sa;
     srand(getpid());
     setvar();
-    sh_mem=malloc(sizeof(int)*6*SO_MERCI+sizeof(pid_t)*SO_NAVI*SO_MERCI+(sizeof(int)+sizeof(double)*2+(sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*merci_ric_off*2)*SO_PORTI+sizeof(pid_t)*SO_NAVI);
+    
     navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
@@ -127,10 +127,22 @@ int main(int args,char* argv[]){
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
-    mem_id = shmget (getpid(), sizeof(int)*6*SO_MERCI+sizeof(pid_t)*SO_NAVI*SO_MERCI+(sizeof(int)+sizeof(double)*2+(sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*merci_ric_off*2)*SO_PORTI+sizeof(pid_t)*SO_NAVI, 0600 | IPC_CREAT );
+    mem_id = shmget (getpid(), sizeof(struct shared_data), 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id, NULL, 0);    
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", mem_id, sem_id);
-    
+    sh_mem=calloc(1,sizeof(struct shared_data));
+    sh_mem->merci=calloc(SO_MERCI,sizeof(struct merce));
+    for(i=0;i<SO_MERCI;i++)
+    {
+        sh_mem->merci->pid_navi=calloc(SO_NAVI,sizeof(pid_t));
+    }
+    sh_mem->porti=calloc(SO_PORTI,sizeof(struct porto));
+    for(i=0;i<SO_PORTI;i++)
+    {
+        sh_mem->porti->ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));
+        sh_mem->porti->off=calloc(MERCI_RIC_OFF,sizeof(struct merce));
+    }
+    sh_mem->navi_in_transito=calloc(SO_NAVI,sizeof(pid_t));
     /*creazione merci*/
     LOCK
     for(i=0;i<SO_MERCI;i++)
