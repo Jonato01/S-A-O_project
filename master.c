@@ -114,9 +114,11 @@ int main(int args,char* argv[]){
     
     int i;
     struct sigaction sa;
-    srand(getpid());
     setvar();
-    
+    printf("%d %d %d\n", SO_NAVI, SO_PORTI, SO_MERCI);
+    printf("%ld\n", (sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*SO_MERCI + (sizeof(int)+sizeof(double)*2+(sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*merci_ric_off*2)*SO_PORTI + sizeof(pid_t)*SO_NAVI);
+    srand(getpid());
+    sh_mem=malloc((sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*SO_MERCI + (sizeof(int)+sizeof(double)*2+(sizeof(int)*6+sizeof(pid_t)*SO_NAVI)*merci_ric_off*2)*SO_PORTI + sizeof(pid_t)*SO_NAVI);
     navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
