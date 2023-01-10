@@ -55,6 +55,7 @@ struct merce {
     int pre;
     pid_t *pid_navi;
 };
+
 struct nave
 {
     int idn;
