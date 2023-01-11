@@ -114,7 +114,8 @@ int main(int args,char* argv[]){
     struct sigaction sa;
     srand(getpid());
     /*setvar();*/
-    mem_id=calloc(SIZEMEM,sizeof(int));
+    i=SIZEMEM;
+    mem_id=calloc(5000,sizeof(int));
     printf("%d %d %d\n", SO_NAVI, SO_PORTI, SO_MERCI);
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
@@ -131,7 +132,7 @@ int main(int args,char* argv[]){
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
-    mem_id[0] = shmget (getpid(),sizeof(struct shared_data), 0600 | IPC_CREAT );
+    mem_id[0] = shmget(getpid(),sizeof(struct shared_data), 0600 | IPC_CREAT );
     sh_mem = shmat(mem_id[0], NULL, 0);
     mem_id[1]= shmget(getpid()+3,sizeof(struct merce)*SO_MERCI,0600 | IPC_CREAT);
     sh_mem->merci=shmat(mem_id[1],NULL,0);
@@ -142,26 +143,28 @@ int main(int args,char* argv[]){
     j=4;
     for(i=0;i<SO_PORTI;i++)
     {
+        
         mem_id[j]= shmget(getpid()+j,sizeof(struct merce)*MERCI_RIC_OFF,0600 | IPC_CREAT);
         sh_mem->porti[i].ric=shmat(mem_id[j],NULL,0);
         j++;
-        
         mem_id[j]= shmget(getpid()+j,sizeof(struct merce)*MERCI_RIC_OFF,0600 | IPC_CREAT);
         sh_mem->porti[i].off=shmat(mem_id[j],NULL,0);
         j++;
         for(k=0;k<MERCI_RIC_OFF;k++)
         {
             mem_id[j]= shmget(getpid()+j,sizeof(pid_t)*SO_NAVI,0600 | IPC_CREAT);
-            sh_mem->porti[i].ric[k].pid_navi=shmat(mem_id[j],NULL,0);
+            sh_mem->porti[i].ric[k].pid_navi=shmat(mem_id[j],NULL,0);/*errore qui*/
             j++;
             mem_id[j]= shmget(getpid()+j,sizeof(pid_t)*SO_NAVI,0600 | IPC_CREAT);
-            sh_mem->porti[i].off[k].pid_navi=shmat(mem_id[j],NULL,0);
+            
+            sh_mem->porti[i].off[k].pid_navi=shmat(mem_id[j],NULL,0);/*errore qui*/
             j++;
         }
     }    
-    printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", mem_id, sem_id);
+    printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", 5, sem_id);
     /*creazione merci*/
     LOCK
+    printf("ciao\n");
     for(i=0;i<SO_MERCI;i++)
     {
         sh_mem-> merci[i].id=i;
@@ -169,7 +172,7 @@ int main(int args,char* argv[]){
         sh_mem-> merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
         sh_mem-> merci[i].num=0;
     }
-    
+    printf("ciao\n");
     UNLOCK
     genporti();     
     

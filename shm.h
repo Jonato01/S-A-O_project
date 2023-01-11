@@ -5,7 +5,7 @@
 #include "var.h"
 #define NUM_SEMS 5
 #define SO_LATO 100.00 
-#define SIZEMEM 4+SO_PORTI*2+SO_PORTI*SO_NAVI*2
+#define SIZEMEM 4+SO_PORTI*2+2*MERCI_RIC_OFF*SO_PORTI
 #define SO_GIORNI 30
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
