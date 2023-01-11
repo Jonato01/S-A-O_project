@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/mman.h>
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -113,7 +114,7 @@ int main(int args,char* argv[]){
     int i; int k; int j;
     struct sigaction sa;
     srand(getpid());
-    /*setvar();*/
+    setvar();
     i=SIZEMEM;
     mem_id=calloc(5000,sizeof(int));
     printf("%d %d %d\n", SO_NAVI, SO_PORTI, SO_MERCI);
@@ -132,35 +133,16 @@ int main(int args,char* argv[]){
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
-    mem_id[0] = shmget(getpid(),sizeof(struct shared_data), 0600 | IPC_CREAT );
-    sh_mem = shmat(mem_id[0], NULL, 0);
-    mem_id[1]= shmget(getpid()+3,sizeof(struct merce)*SO_MERCI,0600 | IPC_CREAT);
-    sh_mem->merci=shmat(mem_id[1],NULL,0);
-    mem_id[2]= shmget(getpid()+4,sizeof(pid_t)*SO_NAVI,0600 | IPC_CREAT);
-    sh_mem->navi_in_transito=shmat(mem_id[2],NULL,0);
-    mem_id[3]= shmget(getpid()+5,sizeof(struct porto)*SO_PORTI,0600 | IPC_CREAT);
-    sh_mem->porti=shmat(mem_id[3],NULL,0);
-    j=4;
-    for(i=0;i<SO_PORTI;i++)
-    {
+    mem_id=shm_open("Sh_mem_prog", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (shm_fd == -1) {
+        perror("Error opening shared memory")  
+        exit(EXIT_FAILURE);
+    }
+    if (ftruncate(mem_id,sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI) == -1) {
         
-        mem_id[j]= shmget(getpid()+j,sizeof(struct merce)*MERCI_RIC_OFF,0600 | IPC_CREAT);
-        sh_mem->porti[i].ric=shmat(mem_id[j],NULL,0);
-        j++;
-        mem_id[j]= shmget(getpid()+j,sizeof(struct merce)*MERCI_RIC_OFF,0600 | IPC_CREAT);
-        sh_mem->porti[i].off=shmat(mem_id[j],NULL,0);
-        j++;
-        for(k=0;k<MERCI_RIC_OFF;k++)
-        {
-            mem_id[j]= shmget(getpid()+j,sizeof(pid_t)*SO_NAVI,0600 | IPC_CREAT);
-            sh_mem->porti[i].ric[k].pid_navi=shmat(mem_id[j],NULL,0);/*errore qui*/
-            j++;
-            mem_id[j]= shmget(getpid()+j,sizeof(pid_t)*SO_NAVI,0600 | IPC_CREAT);
-            
-            sh_mem->porti[i].off[k].pid_navi=shmat(mem_id[j],NULL,0);/*errore qui*/
-            j++;
-        }
-    }    
+    }
+
+
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", 5, sem_id);
     /*creazione merci*/
     LOCK
