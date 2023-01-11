@@ -146,10 +146,13 @@ void genmerci()
 
 int main(int argc, char * argv[]){
     int maxbanchine;
-    int mem_id; int i;
-    int bancid; void *sh; 
+    int mem_id; int i; int k; char* hlp; 
+    int bancid; 
     struct sigaction sa;
+    size_t j;
+    j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
     srand(getpid());
+    setvar();
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
     /*sigaction(SIGINT, &sa, NULL);*/
@@ -157,23 +160,34 @@ int main(int argc, char * argv[]){
     porto_id = atoi(argv[1]);
     bancid = semget(getppid()+2,SO_PORTI,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
-    mem_id = shmget (getpid(),sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI, 0600  );
-    sh = shmat(mem_id, NULL, 0);
-    sh_mem=(struct shared_data*) sh;
-    sh=((char*)sh)+sizeof(struct shared_data*);
-    sh_mem->merci=(struct merce*) sh;
-    sh=((char*)sh)+sizeof(struct merce*)*SO_MERCI;
-    sh_mem->navi_in_transito=(pid_t*) sh;
-    sh=((char*)sh)+sizeof(pid_t)*SO_NAVI;
-    sh_mem->porti=(struct porto*)sh;
-    sh=((char*)sh)+sizeof(struct porto*)*SO_PORTI;
+    
+    mem_id=shmget(getppid(),j,0600);
+    sh_mem=shmat(mem_id,NULL,0600);
+    hlp=(char*)sh_mem;
+    hlp=(char*)(hlp+sizeof(struct shared_data));
+    sh_mem->merci=(struct merce *) (hlp);
+    hlp= (char *)(sh_mem->merci + sizeof(struct merce) * SO_MERCI);
+    sh_mem->porti = (struct porto *) ((char *) hlp);
+    hlp=(char *)(hlp+sizeof(struct porto *)*SO_PORTI);
     for(i=0;i<SO_PORTI;i++)
     {
-        sh_mem->porti[i].ric=(struct merce*)sh;
-        sh=((char*)sh)+sizeof(struct merce*)*MERCI_RIC_OFF;
-        sh_mem->porti[i].off=(struct merce*)sh;
-        sh=((char*)sh)+sizeof(struct merce*)*MERCI_RIC_OFF;
+        sh_mem->porti[i].off=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        sh_mem->porti[i].ric=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        for(k=0;k<MERCI_RIC_OFF;k++)
+        {
+            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
+            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
+            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
+            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
+        }
     }
+
+
+
+
+
     LOCK
     sh_mem->porti[porto_id].idp=porto_id;
     UNLOCK
@@ -205,7 +219,6 @@ int main(int argc, char * argv[]){
     sh_mem->porti[porto_id].coord.y = coor.y;
     maxbanchine=rand() % SO_BANCHINE+1;
     semctl(bancid, porto_id, SETVAL, maxbanchine);
-
     printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, maxbanchine);
 
     genmerci();

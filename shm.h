@@ -4,21 +4,7 @@
 #include <stdbool.h>
 #include "var.h"
 #define NUM_SEMS 5
-#define SO_LATO 100.00 
-#define SIZEMEM 4+SO_PORTI*2+2*MERCI_RIC_OFF*SO_PORTI
-#define SO_GIORNI 30
-#define NAVI_PATH_NAME "./nave"
-#define PORTI_PATH_NAME "./porto"
-#define SO_MERCI 12
-#define MERCI_RIC_OFF 6
-#define SO_SIZE 100 
-#define SO_MIN_VITA 30 /*vita minima merci*/ 
-#define S0_MAX_VITA 30
-#define SO_SPEED 50
-#define SO_CAPACITY 120
-#define SO_BANCHINE 4
-#define SO_LOADSPEED 200
-#define SO_FILL SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3
+
 
 /*blocca la banchina all'attracco*/
 #define LOCK_BAN(ID);   \
@@ -75,13 +61,11 @@ struct porto {
     struct merce *off;
 };
 
-
+/*lunghezza shared memory*/
 struct shared_data {
     struct merce * merci;
     struct porto * porti;
-    pid_t *navi_in_transito;
+   
 };
-
-
 
 #endif

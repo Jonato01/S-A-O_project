@@ -5,13 +5,11 @@
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/mman.h>
 #include <string.h>
 #include <sys/ipc.h>
-#include <sys/shm.h>
 #include <signal.h>
-#include <sys/stat.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 #include "shm.h"
 #include "var.h"
 #include <stdbool.h>
@@ -19,7 +17,6 @@
 struct sembuf sops;
 int sem_id; int mem_id; int banchine;
 struct shared_data * sh_mem;
-const int j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI;
 pid_t *porti;
 pid_t *navi;
 pid_t meteo;
@@ -36,13 +33,9 @@ void fine_sim(int signal)
         if(n<SO_PORTI)
         kill(porti[n],SIGINT);
     }
-    if(munmap(sh_mem, j) == -1) {
-        perror("Error unmapping shared memory");
-    }
-    if(close(mem_id) == -1) {
-        perror("Error closing shared memory");
-    }
-    
+    shmdt(sh_mem);
+    shmctl(mem_id,0,IPC_RMID);
+
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
@@ -102,7 +95,6 @@ void genporti()
         if(!(porti[i]=fork())){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
-
             execve(PORTI_PATH_NAME,argsnavi,NULL);            
             perror("Execve porti er");
 	    	exit(1);
@@ -118,10 +110,12 @@ int main(int args,char* argv[]){
     
     int i; int k; 
     struct sigaction sa;
-    
+    char* hlp;
+    size_t j;
+    j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+
     srand(getpid());
     setvar();
-    i=SIZEMEM;
     
     printf("%d %d %d\n", SO_NAVI, SO_PORTI, SO_MERCI);
     sa.sa_handler=fine_sim;
@@ -139,33 +133,27 @@ int main(int args,char* argv[]){
     sem_id = semget(getpid()+1,NUM_SEMS,0600 | IPC_CREAT);
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
-    mem_id=shm_open("Sh_mem_prog", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    if (mem_id  == -1) {
-        perror("Error opening shared memory"); 
-        exit(EXIT_FAILURE);
-    }
-    if (ftruncate(mem_id,j) == -1) {
-        perror("error on ftruncate sh_mem");
-        exit(1);
-    }
-    sh_mem = mmap(NULL,j, PROT_READ | PROT_WRITE, MAP_SHARED, mem_id, 0);
-    if (sh_mem == MAP_FAILED) {
-        perror("Error mapping shared memory: "); 
-        exit(1);
-    }
-    sh_mem->navi_in_transito=mmap(NULL,sizeof( pid_t)*SO_NAVI, PROT_READ | PROT_WRITE, MAP_SHARED| MAP_ANONYMOUS, -1, 0);
-    sh_mem->merci=mmap(NULL,sizeof(struct merce)*SO_MERCI, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    mem_id=shmget(getpid(),j,0600 | IPC_CREAT);
+    sh_mem=shmat(mem_id,NULL,0600);
     
-    sh_mem->porti=mmap(NULL,sizeof(struct porto)*SO_PORTI, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    
+    hlp=(char*)sh_mem;
+    hlp=(char*)(hlp+sizeof(struct shared_data));
+    sh_mem->merci=(struct merce *) (hlp);
+    hlp= (char *)(sh_mem->merci + sizeof(struct merce) * SO_MERCI);
+    sh_mem->porti = (struct porto *) ((char *) hlp);
+    hlp=(char *)(hlp+sizeof(struct porto *)*SO_PORTI);
     for(i=0;i<SO_PORTI;i++)
     {
-        sh_mem->porti[i].off=mmap(NULL,sizeof(struct merce)*MERCI_RIC_OFF, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-        sh_mem->porti[i].ric=mmap(NULL,sizeof(struct merce)*MERCI_RIC_OFF, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        sh_mem->porti[i].off=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        sh_mem->porti[i].ric=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
         for(k=0;k<MERCI_RIC_OFF;k++)
         {
-            sh_mem->porti[i].off[k].pid_navi=mmap(NULL,sizeof(pid_t)*SO_NAVI, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-            sh_mem->porti[i].ric[k].pid_navi=mmap(NULL,sizeof(pid_t)*SO_NAVI, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
+            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
+            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
+            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
         }
     } 
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", 5, sem_id);
@@ -175,12 +163,10 @@ int main(int args,char* argv[]){
     for(i=0;i<SO_MERCI;i++)
     {
         sh_mem-> merci[i].id=i;
-        
         sh_mem-> merci[i].size=rand()%(int)SO_SIZE+1;
         sh_mem-> merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
         sh_mem-> merci[i].num=0;
     }
-    printf("ciao\n");
     UNLOCK
     genporti();     
     

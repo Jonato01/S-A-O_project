@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <stdbool.h>
 #include <signal.h>
 #include <strings.h>
@@ -287,10 +289,13 @@ void scarico(){
 
 int main (int argc, char * argv[]){
     int mem_id;
-    int i; void *sh;
+    int i; int k; char* hlp;
     double distance;
     double route_time; double nano;
     struct sigaction sa;
+    size_t j;
+    j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+     setvar();
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
     ord=calloc(SO_PORTI,sizeof(int));
@@ -301,26 +306,29 @@ int main (int argc, char * argv[]){
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
-    bancid = semget(getppid()+2,SO_PORTI,0600);
-    mem_id = shmget (getpid(),sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI, 0600  );
-    sh = shmat(mem_id, NULL, 0);
-    sh_mem=(struct shared_data*) sh;
-    sh=((char*)sh)+sizeof(struct shared_data*);
-    sh_mem->merci=(struct merce*) sh;
-    sh=((char*)sh)+sizeof(struct merce*)*SO_MERCI;
-    sh_mem->navi_in_transito=(pid_t*) sh;
-    sh=((char*)sh)+sizeof(pid_t*)*SO_NAVI;
-    sh_mem->porti=(struct porto*)sh;
-    sh=((char*)sh)+sizeof(struct porto*)*SO_PORTI;
+    bancid = semget(getppid()+2,SO_PORTI,0600|IPC_CREAT);
+    mem_id=shmget(getppid(),j,0600);
+    sh_mem=shmat(mem_id,NULL,0600);
+    hlp=(char*)sh_mem;
+    hlp=(char*)(hlp+sizeof(struct shared_data));
+    sh_mem->merci=(struct merce *) (hlp);
+    hlp= (char *)(sh_mem->merci + sizeof(struct merce) * SO_MERCI);
+    sh_mem->porti = (struct porto *) ((char *) hlp);
+    hlp=(char *)(hlp+sizeof(struct porto *)*SO_PORTI);
     for(i=0;i<SO_PORTI;i++)
     {
-        sh_mem->porti[i].ric=(struct merce*)sh;
-        sh=((char*)sh)+sizeof(struct merce*)*MERCI_RIC_OFF;
-        sh_mem->porti[i].off=(struct merce*)sh;
-        sh=((char*)sh)+sizeof(struct merce*)*MERCI_RIC_OFF;
+        sh_mem->porti[i].off=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        sh_mem->porti[i].ric=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        for(k=0;k<MERCI_RIC_OFF;k++)
+        {
+            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
+            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
+            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
+            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
+        }
     }
-    /*TEST ERROR*/
-
     gennave();
 
     sa.sa_handler=handle_morte;
@@ -337,7 +345,7 @@ int main (int argc, char * argv[]){
             if(barchetta.idp_part != -1){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
-                sh_mem->navi_in_transito[barchetta.idn] = getpid();
+                
                 UNLOCK
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
@@ -351,7 +359,6 @@ int main (int argc, char * argv[]){
                 }
                 LOCK
                 barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
-                sh_mem->navi_in_transito[barchetta.idn] = 0;
                 UNLOCK
                 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
@@ -363,7 +370,7 @@ int main (int argc, char * argv[]){
 
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
-                sh_mem->navi_in_transito[barchetta.idn] = getpid();
+                
                 UNLOCK
 
                 route_time = distance / SO_SPEED;
@@ -378,7 +385,7 @@ int main (int argc, char * argv[]){
                 }
                 LOCK
                 barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
-                sh_mem->navi_in_transito[barchetta.idn] = 0;
+        
                 UNLOCK
 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));

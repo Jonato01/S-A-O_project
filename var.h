@@ -20,8 +20,22 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#define SO_PORTI 6
-#define SO_NAVI 10
+#define SO_PORTI so_porti
+#define SO_NAVI so_navi
+#define SO_LATO so_lato
+#define SO_GIORNI so_giorni
+#define NAVI_PATH_NAME "./nave"
+#define PORTI_PATH_NAME "./porto"
+#define SO_MERCI so_merci
+#define MERCI_RIC_OFF merci_ric_off
+#define SO_SIZE so_size
+#define SO_MIN_VITA so_min_vita /*vita minima merci*/ 
+#define S0_MAX_VITA so_max_vita
+#define SO_SPEED so_speed
+#define SO_CAPACITY so_capacity
+#define SO_BANCHINE so_banchine
+#define SO_LOADSPEED so_loadspeed
+#define SO_FILL so_fill
 int so_porti;int so_navi;int so_size;
 int so_merci;int so_capacity;int so_speed;
 int so_banchine; int so_fill; int so_loadspeed;
@@ -41,7 +55,6 @@ void setvar(){
         if((tr=strstr(line,"so_porti"))!=NULL)
         {
             while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF)){
-                printf("%c\n", *tr);
                 tr++;
             }
             if(*tr==10 || *tr==EOF)
@@ -51,7 +64,7 @@ void setvar(){
             }
             else{
                 so_porti=(atoi(tr));
-                printf("\n so_porti: %d\n", so_porti);
+                
             }
         }
         else
