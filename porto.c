@@ -131,8 +131,8 @@ void genmerci()
             sh_mem->porti[porto_id].off[x].pre=0;
             
             r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem->porti[porto_id].off[x].size;
-            if((SO_FILL/SO_PORTI/MERCI_RIC_OFF%sh_mem->porti[porto_id].off[x].size))
-            r++;
+            if(r == 0)
+                r++;
             sh_mem->porti[porto_id].off[x].num=r;
             sh_mem->porti[porto_id].off[x].status = 0;
             break;

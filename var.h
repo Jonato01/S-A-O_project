@@ -1,10 +1,5 @@
 #ifndef VAR_H
 #define VAR_H
-
-
-
- 
-
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,178 +45,118 @@ void setvar(){
         printf("file non aperto ");
         exit(1);
     }
-    while(getline(&line,&len,varf)!=-1)
-    {
-        if((tr=strstr(line,"so_porti"))!=NULL)
-        {
-            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF)){
+    while(getline(&line,&len,varf)!=-1) {
+        if((tr=strstr(line,"so_porti"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
                 tr++;
+            if(*tr==10 || *tr==EOF) { 
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else{
+                so_porti=(atoi(tr));
             }
+        } else if((tr=strstr(line,"so_navi"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 ||*tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_navi=atoi(tr);
+        } else if((tr=strstr(line,"so_banchine"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
+                tr++;
+            if(*tr==10 ||*tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_banchine=atoi(tr);
+        } else if((tr=strstr(line,"so_capacity"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
+                tr++;
+            if(*tr==10 ||*tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else    
+                so_capacity=atoi(tr);
+        } else if((tr=strstr(line,"so_giorni"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
+                tr++;
+            if(*tr==10 ||*tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_giorni=atoi(tr);
+        } else if((tr=strstr(line,"so_lato"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
+                tr++;
+            if(*tr==10 ||*tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_lato=atof(tr);
+        } else if((tr=strstr(line,"so_loadspeed"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_loadspeed=atoi(tr);
+        } else if((tr=strstr(line,"so_max_vita"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_max_vita=atoi(tr);
+        } else if((tr=strstr(line,"so_merci"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_merci=atoi(tr);
+        } else if((tr=strstr(line,"so_min_vita"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF){
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_min_vita=atoi(tr);
+        } else if((tr=strstr(line,"so_size"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF){
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_size=atoi(tr);
+        } else if((tr=strstr(line,"so_speed"))!=NULL){
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF){
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_speed=atoi(tr);
+        } else if((tr=strstr(line,"merci_ric_off"))!=NULL){
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
             if(*tr==10 || *tr==EOF)
-            { 
+            {
                 printf("err numero non trovato");
                 exit(EXIT_FAILURE);
             }
-            else{
-                so_porti=(atoi(tr));
-                
-            }
-        }
-        else
-
-
-        if((tr=strstr(line,"so_navi"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-        if(*tr==10 ||*tr==EOF)
-       {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_navi=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_size"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
-            tr++;
-        if(*tr==10 ||*tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_size=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_merci"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
-            tr++;
-        if(*tr==10 ||*tr==EOF)
-       {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_merci=atoi(tr);
-        } 
-        
-        else
-        if((tr=strstr(line,"so_capacity"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
-            tr++;
-        if(*tr==10 ||*tr==EOF)
-        { printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_capacity=atoi(tr);
-        }
-        
-        else
-        if((tr=strstr(line,"so_speed"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
-            tr++;
-        if(*tr==10 ||*tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_speed=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_banchine"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) ||*tr==10 ||*tr==EOF))
-            tr++;
-        if(*tr==10 ||*tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_banchine=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_speed"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-        if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_speed=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_loadspeed"))!=NULL)
-        {
-            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-        if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_loadspeed=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_lato"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-        if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_lato=atof(tr);
-        }
-        else
-        if((tr=strstr(line,"so_giorni"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-         if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_giorni=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"merci_ric_off"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-          if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        merci_ric_off=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_min_vita"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-         if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        merci_ric_off=atoi(tr);
-        }
-        else
-        if((tr=strstr(line,"so_max_vita"))!=NULL)
-        {while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
-            tr++;
-        if(*tr==10 || *tr==EOF)
-        {printf("err numero non trovato");
-         exit(EXIT_FAILURE);
-        }
-        else
-        so_max_vita=atoi(tr);
-        }
-        else printf("trovata variabile inutilizzata");
+            else
+                merci_ric_off=atoi(tr);
+        } else 
+            printf("trovata variabile inutilizzata");
     }
-    
-
-
+    so_fill=SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3;
 }
-int getporti(){
-return so_porti;}
 
 #endif

@@ -29,9 +29,9 @@ void fine_sim(int signal)
     int n;
     for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
         if(n<SO_NAVI)
-        kill(navi[n],SIGINT);
+            kill(navi[n],SIGINT);
         if(n<SO_PORTI)
-        kill(porti[n],SIGINT);
+            kill(porti[n],SIGINT);
     }
     shmdt(sh_mem);
     shmctl(mem_id,0,IPC_RMID);
@@ -41,16 +41,18 @@ void fine_sim(int signal)
     semctl(banchine, 0, IPC_RMID);
     exit(0);
 }
+
 void alarm_giorni(int signal)
 {
     int n;
     for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
             if(n<SO_NAVI)
-            kill(navi[n],SIGUSR1);
+                kill(navi[n],SIGUSR1);
             if(n<SO_PORTI)
-            kill(porti[n],SIGUSR1);
+                kill(porti[n],SIGUSR1);
         }
 }
+
 void resetSems(int sem_id){
     int i;
     for(i = 1; i < NUM_SEMS; i++){
@@ -117,7 +119,6 @@ int main(int args,char* argv[]){
     srand(getpid());
     setvar();
     
-    printf("%d %d %d\n", SO_NAVI, SO_PORTI, SO_MERCI);
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
     
