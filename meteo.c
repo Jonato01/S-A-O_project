@@ -13,9 +13,10 @@
 #include <math.h>
 #include <errno.h>
 #include "shm.h"
-
-struct shared_data * sh_mem;
-
+#include "var.h"
+struct shared_data  sh_mem;
+struct shared_data  sh_mem_2;
+int mem_id;
 void tempesta(){
     int i;
     pid_t pid;
@@ -29,10 +30,23 @@ void tempesta(){
 }
 
 int main(){
+    int i; char * hlp;
     srand(getpid());
-    sh_mem = shmat(mem_id, NULL, 0);
-
+    mem_id=shmget(getppid(),j,0600);
+    hlp=shmat(mem_id,NULL,0600);
+    sh_mem_2.porti=calloc(MERCI_RIC_OFF,struct merce);
+    sh_mem.merci=(struct merce *) (hlp);
+    hlp= (char *)(hlp + sizeof(struct merce)* SO_MERCI);
+    sh_mem.porti = (struct porto *) (hlp);
+    hlp= (char *)(hlp + sizeof(struct porto)* SO_PORTI);
+    for(i=0;i<SO_PORTI;i++)
+    {
+        sh_mem_2.porti[i].off=(struct merce*)(hlp);
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        sh_mem_2.porti[i].ric=(struct merce*) (hlp);
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+    }
     while(1)
-    shmdt ( sh_mem );
+    shmdt ( hlp );
     exit(0);
 }
