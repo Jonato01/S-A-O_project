@@ -282,7 +282,7 @@ void scarico(){
         else
             printf("Excuse me, what the fuck!?\n");
     }
-
+    
     printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f\n\n", barchetta.idn, barchetta.carico, barchetta.carico_pre, work_time);
 }
 
@@ -384,13 +384,20 @@ int main (int argc, char * argv[]){
                 scarico();
                 printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_dest);
-
+                for(i = 0; i < MERCI_RIC_OFF; i++){
+                    if(merci_ric[i].id!=-1)
+                    break;
+                }
+                if(i==MERCI_RIC_OFF)
+                printf("Nave %d: merci prenotate esaurite\n",barchetta.idn);
+                else{
                 printf("Ancora prenotate: ");
                 for(i = 0; i < MERCI_RIC_OFF; i++){
+                    if(merci_ric[i].id!=-1)
                     printf("%d ton di %d + ", merci_ric[i].size * merci_ric[i].num, merci_ric[i].id);
                 }
                 printf("\n");
-            } else {
+            }} else {
                 printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest);
                 barchetta.carico_pre = 0;
             }
