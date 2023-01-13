@@ -40,7 +40,6 @@ struct merce {
     int vita;
     int num;
     int pre;
-    pid_t *pid_navi;
 };
 
 struct nave

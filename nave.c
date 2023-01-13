@@ -17,9 +17,11 @@
 #include "shm.h"
 
 struct sembuf sops;
-struct shared_data * sh_mem;
+struct shared_data  sh_mem;
+struct shared_data  sh_mem_2;
 int sem_id;
 struct merce *merci_ric;
+char* hlp;
 int nmerci;
 int bancid;
 struct nave barchetta;
@@ -33,7 +35,7 @@ void handle_morte(int signal){
     sops.sem_op = 1;            
     semop(sem_id,&sops, 1);
     UNLOCK
-    shmdt ( sh_mem );
+    shmdt ( hlp );
     exit(0);
 
 }
@@ -69,12 +71,13 @@ void ordinaporti(struct coordinates coord){
     int j;
     bool swapped;
     for(i = 0; i < SO_PORTI; i++){
-        ord[i] = sh_mem->porti[i].idp;
+        ord[i] = sh_mem.porti[i].idp;
     }
     for (i = 0; i < SO_PORTI - 1; i++){
         swapped = false;
         for (j = 0; j < SO_PORTI - i - 1; j++)
-            if (DISTANCE(sh_mem->porti[ord[j]].coord, coord) > DISTANCE(sh_mem->porti[ord[j+1]].coord, coord)){
+        
+            if (DISTANCE(sh_mem.porti[ord[j]].coord, coord) > DISTANCE(sh_mem.porti[ord[j+1]].coord, coord)){
                 swap(&ord[j], &ord[j + 1]);
                 swapped = true;
             }
@@ -87,7 +90,7 @@ int containsOff(int portoid, int merceid){
     int i;
 
     for(i = 0; i < MERCI_RIC_OFF; i++){
-        if(sh_mem->porti[portoid].off[i].id == merceid){
+        if(sh_mem_2.porti[portoid].off[i].id == merceid){
             return i;
         }
     }
@@ -97,7 +100,7 @@ int containsOff(int portoid, int merceid){
 int containsRic(int portoid, int merceid){
     int i;
     for(i = 0; i < MERCI_RIC_OFF; i++){
-        if(sh_mem->porti[portoid].ric[i].id == merceid){
+        if(sh_mem_2.porti[portoid].ric[i].id == merceid){
             return i;
         }
     }
@@ -111,28 +114,22 @@ int getpart()
     int i;
     int j;
     int q;
-    int pid = 0;
     bool flag = false;
     LOCK
     for(i = 0; i < SO_PORTI; i++){
         for(j = 0; j < MERCI_RIC_OFF; j++){
             y = containsOff(ord[i], merci_ric[j].id);
-            if((y > -1) && (sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
+            if((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
                 flag = true;
                 q = merci_ric[j].pre;
 
-                while(sh_mem->porti[ord[i]].off[y].pid_navi[pid] != 0){
-                    pid++;
-                }
-                sh_mem->porti[ord[j]].off[y].pid_navi[pid] = getpid();
-                pid = 0;
-
-                while(q > 0 && sh_mem->porti[ord[i]].off[y].num - sh_mem->porti[ord[i]].off[y].pre > 0){
-                    sh_mem->porti[ord[i]].off[y].pre++;
+                
+                while(q > 0 && sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0){
+                    sh_mem_2.porti[ord[i]].off[y].pre++;
                     q--;
                 }
                 q = merci_ric[j].pre - q;
-                printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem->porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]);
+                printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem_2.porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]);
                 merci_ric[j].pre = q;
             }
         }
@@ -156,19 +153,21 @@ int getdest()
     int j;
     bool flag = false;
     ordinaporti(barchetta.coord);
+    
     LOCK
     if(barchetta.carico_pre < SO_CAPACITY){
+        
         for(i = 0; i < SO_PORTI; i++){
             for(j = 0; j < MERCI_RIC_OFF; j++){
-                if(!sh_mem->porti[ord[i]].ric[j].pre && sh_mem->porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
+                if(!sh_mem_2.porti[ord[i]].ric[j].pre && sh_mem_2.porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
                     flag = true;
-                    merci_ric[j]=sh_mem->porti[ord[i]].ric[j];
+                    merci_ric[j]=sh_mem_2.porti[ord[i]].ric[j];
                     merci_ric[j].num = 0;
-                    while(sh_mem->porti[ord[i]].ric[j].pre < sh_mem->porti[ord[i]].ric[j].num && sh_mem->porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
-                        sh_mem->porti[ord[i]].ric[j].pre++;
+                    while(sh_mem_2.porti[ord[i]].ric[j].pre < sh_mem_2.porti[ord[i]].ric[j].num && sh_mem_2.porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
+                        sh_mem_2.porti[ord[i]].ric[j].pre++;
                         merci_ric[j].pre++;
                         nmerci++;
-                        barchetta.carico_pre += sh_mem->porti[ord[i]].ric[j].size;
+                        barchetta.carico_pre += sh_mem_2.porti[ord[i]].ric[j].size;
                     }
                     printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]);                 
                 } else {
@@ -218,7 +217,7 @@ void carico(){
             if(y != -1){
                 merci_ric[i].status = 1;
                 LOCK
-                sh_mem->porti[barchetta.idp_part].off[y].status = 1;
+                sh_mem_2.porti[barchetta.idp_part].off[y].status = 1;
                 t = merci_ric[i].pre;       
                 while(t > 0){
                     barchetta.carico += merci_ric[i].size;
@@ -256,7 +255,7 @@ void scarico(){
             if(y != -1){
                 merci_ric[i].status = 2;
                 LOCK
-                sh_mem->porti[barchetta.idp_dest].ric[y].status = 2;
+                sh_mem_2.porti[barchetta.idp_dest].ric[y].status = 2;
                 UNLOCK
                 t = 0;
                 while(merci_ric[i].pre > 0){
@@ -289,13 +288,14 @@ void scarico(){
 
 int main (int argc, char * argv[]){
     int mem_id;
-    int i; int k; char* hlp;
+    int i;  
     double distance;
     double route_time; double nano;
     struct sigaction sa;
     size_t j;
-    j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
-     setvar();
+    setvar();
+    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+    sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto)); 
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
     ord=calloc(SO_PORTI,sizeof(int));
@@ -308,26 +308,17 @@ int main (int argc, char * argv[]){
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
     bancid = semget(getppid()+2,SO_PORTI,0600|IPC_CREAT);
     mem_id=shmget(getppid(),j,0600);
-    sh_mem=shmat(mem_id,NULL,0600);
-    hlp=(char*)sh_mem;
-    hlp=(char*)(hlp+sizeof(struct shared_data));
-    sh_mem->merci=(struct merce *) (hlp);
-    hlp= (char *)(sh_mem->merci + sizeof(struct merce) * SO_MERCI);
-    sh_mem->porti = (struct porto *) ((char *) hlp);
-    hlp=(char *)(hlp+sizeof(struct porto *)*SO_PORTI);
+    hlp=shmat(mem_id,NULL,0600);
+    sh_mem.merci=(struct merce *) (hlp);
+    hlp= (char *)(hlp + sizeof(struct merce) * SO_MERCI);
+    sh_mem.porti = (struct porto *) ( hlp);
+    hlp= (char *)(hlp + sizeof(struct porto) * SO_PORTI);
     for(i=0;i<SO_PORTI;i++)
     {
-        sh_mem->porti[i].off=(struct merce*)hlp;
+        sh_mem_2.porti[i].off=(struct merce*)hlp;
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        sh_mem->porti[i].ric=(struct merce*)hlp;
+        sh_mem_2.porti[i].ric=(struct merce*) hlp;
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        for(k=0;k<MERCI_RIC_OFF;k++)
-        {
-            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
-            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
-            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
-            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
-        }
     }
     gennave();
 
@@ -338,14 +329,13 @@ int main (int argc, char * argv[]){
 
     while((barchetta.idp_dest = getdest()) != -1){
 
-        ordinaporti(sh_mem->porti[barchetta.idp_dest].coord);
+        ordinaporti(sh_mem.porti[barchetta.idp_dest].coord);
 
         while(barchetta.carico_pre > 0){
             barchetta.idp_part = getpart();
             if(barchetta.idp_part != -1){
                 LOCK
-                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem->porti[barchetta.idp_part].coord, barchetta.coord));
-                
+                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
@@ -358,7 +348,7 @@ int main (int argc, char * argv[]){
                     printf("Excuse me, what the fuck!?\n");
                 }
                 LOCK
-                barchetta.coord = sh_mem->porti[barchetta.idp_part].coord;
+                barchetta.coord = sh_mem.porti[barchetta.idp_part].coord;
                 UNLOCK
                 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
@@ -369,7 +359,7 @@ int main (int argc, char * argv[]){
                 UNLOCK_BAN (barchetta.idp_part);
 
                 LOCK
-                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem->porti[barchetta.idp_dest].coord, barchetta.coord));
+                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
                 
                 UNLOCK
 
@@ -384,7 +374,7 @@ int main (int argc, char * argv[]){
                         printf("Excuse me, what the fuck!?\n");
                 }
                 LOCK
-                barchetta.coord = sh_mem->porti[barchetta.idp_dest].coord;
+                barchetta.coord = sh_mem.porti[barchetta.idp_dest].coord;
         
                 UNLOCK
 
@@ -407,7 +397,7 @@ int main (int argc, char * argv[]){
         }
     }
     /*CONTINUARE*/
-    while(1)
-    shmdt ( sh_mem );
+    while(1);
+
     exit(0);
 }

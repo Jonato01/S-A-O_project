@@ -13,9 +13,10 @@
 #include "shm.h"
 #include "var.h"
 struct sembuf sops;
-struct shared_data * sh_mem;
+struct shared_data  sh_mem;
+struct shared_data  sh_mem_2;
 struct coordinates coor;
-
+char* hlp;
 int sem_id;
 int porto_id; 
 void handle_morte(int signal)
@@ -26,7 +27,7 @@ void handle_morte(int signal)
     sops.sem_op = 1;            
     semop(sem_id,&sops, 1);
     UNLOCK
-    shmdt ( sh_mem );
+    shmdt ( hlp );
     exit(0);
 
 
@@ -38,15 +39,13 @@ void handle_time(int signal)
     LOCK
     for(i=0;i<MERCI_RIC_OFF;i++)
     {
-        sh_mem->porti[porto_id].off[i].vita--;
-        if(sh_mem->porti[porto_id].off[i].vita==0)
+        sh_mem_2.porti[porto_id].off[i].vita--;
+        if(sh_mem_2.porti[porto_id].off[i].vita==0)
         {
             for(j = 0; j < SO_NAVI; j++){
-                if(sh_mem->porti[porto_id].off[i].pid_navi[j] != 0 && sh_mem->porti[porto_id].off[i].pre == 1){
-                    kill(sh_mem->porti[porto_id].off[i].pid_navi[j],SIGALRM);
-                }
+                
             }
-            bzero(&sh_mem->porti[porto_id].off[i],sizeof(struct merce));
+            bzero(&sh_mem_2.porti[porto_id].off[i],sizeof(struct merce));
             /*Far scadere bene le merci*/
         }
     }
@@ -62,7 +61,7 @@ void creaPorto(){
         coor.y = rand() % (int)(SO_LATO + 1);
 
         for(i = 0; i < porto_id; i++){
-            if(coor.x == sh_mem->porti[i].coord.x && coor.y == sh_mem->porti[i].coord.y){
+            if(coor.x == sh_mem.porti[i].coord.x && coor.y == sh_mem.porti[i].coord.y){
                 flag = true;
                 break;
             } else {
@@ -84,29 +83,29 @@ void genric()
         r=rand()%SO_MERCI;
             for(x = 0; x < i; x++)
             {
-                if(sh_mem->porti[porto_id].ric[x].id==r)
+                if(sh_mem_2.porti[porto_id].ric[x].id==r)
                 break;    
             }
             off=true;
             for(j=0; j<MERCI_RIC_OFF && off;j++)
             {
-                if(r==sh_mem->porti[porto_id].off[j].id)
+                if(r==sh_mem_2.porti[porto_id].off[j].id)
                     off=false;
             }
             if(x==i && off){
-                sh_mem->porti[porto_id].ric[x].id=r;
-                sh_mem->porti[porto_id].ric[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].vita;
-                sh_mem->porti[porto_id].ric[x].size=sh_mem-> merci[sh_mem->porti[porto_id].ric[x].id].size;
-                sh_mem->porti[porto_id].ric[x].pre=false;
-                r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem->porti[porto_id].ric[x].size;
-                if((SO_FILL/SO_PORTI/MERCI_RIC_OFF%sh_mem->porti[porto_id].ric[x].size))
+                sh_mem_2.porti[porto_id].ric[x].id=r;
+                sh_mem_2.porti[porto_id].ric[x].vita=sh_mem. merci[sh_mem_2.porti[porto_id].ric[x].id].vita;
+                sh_mem_2.porti[porto_id].ric[x].size=sh_mem. merci[sh_mem_2.porti[porto_id].ric[x].id].size;
+                sh_mem_2.porti[porto_id].ric[x].pre=false;
+                r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem_2.porti[porto_id].ric[x].size;
+                if((SO_FILL/SO_PORTI/MERCI_RIC_OFF%sh_mem_2.porti[porto_id].ric[x].size))
                     r++;
-                sh_mem->porti[porto_id].ric[x].num=r;
+                sh_mem_2.porti[porto_id].ric[x].num=r;
                 break;
             }
         }
         
-        printf("creata domanda di %d lotti da %d ton di merce %d a porto %d\n", sh_mem->porti[porto_id].ric[x].num, sh_mem->merci[sh_mem->porti[porto_id].ric[x].id].size, sh_mem->porti[porto_id].ric[i].id,porto_id);
+        printf("creata domanda di %d lotti da %d ton di merce %d a porto %d\n", sh_mem_2.porti[porto_id].ric[x].num, sh_mem.merci[sh_mem_2.porti[porto_id].ric[x].id].size, sh_mem_2.porti[porto_id].ric[i].id,porto_id);
     }
     printf("\n"); 
 }
@@ -121,24 +120,24 @@ void genmerci()
         r=rand()%SO_MERCI;
             for(x = 0; x < i; x++)
             {
-                if(sh_mem->porti[porto_id].off[x].id==r)
+                if(sh_mem_2.porti[porto_id].off[x].id==r)
                 break;
             }
             if(x==i){
-            sh_mem->porti[porto_id].off[x].id=r;
-            sh_mem->porti[porto_id].off[x].vita=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].vita;
-            sh_mem->porti[porto_id].off[x].size=sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size;
-            sh_mem->porti[porto_id].off[x].pre=0;
+            sh_mem_2.porti[porto_id].off[x].id=r;
+            sh_mem_2.porti[porto_id].off[x].vita=sh_mem. merci[sh_mem_2.porti[porto_id].off[x].id].vita;
+            sh_mem_2.porti[porto_id].off[x].size=sh_mem. merci[sh_mem_2.porti[porto_id].off[x].id].size;
+            sh_mem_2.porti[porto_id].off[x].pre=0;
             
-            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem->porti[porto_id].off[x].size;
+            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem_2.porti[porto_id].off[x].size;
             if(r == 0)
                 r++;
-            sh_mem->porti[porto_id].off[x].num=r;
-            sh_mem->porti[porto_id].off[x].status = 0;
+            sh_mem_2.porti[porto_id].off[x].num=r;
+            sh_mem_2.porti[porto_id].off[x].status = 0;
             break;
             }
         }        
-        printf("creati %d lotti da %d ton di merce %d a porto %d (vita: %d giorni)\n",sh_mem->porti[porto_id].off[x].num, sh_mem-> merci[sh_mem->porti[porto_id].off[x].id].size, sh_mem->porti[porto_id].off[i].id,porto_id, sh_mem->porti[porto_id].off[i].vita);
+        printf("creati %d lotti da %d ton di merce %d a porto %d (vita: %d giorni)\n",sh_mem_2.porti[porto_id].off[x].num, sh_mem. merci[sh_mem_2.porti[porto_id].off[x].id].size, sh_mem_2.porti[porto_id].off[i].id,porto_id, sh_mem_2.porti[porto_id].off[i].vita);
     }
     printf("\n");
     
@@ -146,13 +145,16 @@ void genmerci()
 
 int main(int argc, char * argv[]){
     int maxbanchine;
-    int mem_id; int i; int k; char* hlp; 
+    int mem_id; int i; 
     int bancid; 
     struct sigaction sa;
     size_t j;
-    j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
-    srand(getpid());
     setvar();
+    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+    srand(getpid());
+    sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto)); 
+    
+    
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
     /*sigaction(SIGINT, &sa, NULL);*/
@@ -162,34 +164,22 @@ int main(int argc, char * argv[]){
     sem_id = semget(getppid()+1, NUM_SEMS, 0600);
     
     mem_id=shmget(getppid(),j,0600);
-    sh_mem=shmat(mem_id,NULL,0600);
-    hlp=(char*)sh_mem;
-    hlp=(char*)(hlp+sizeof(struct shared_data));
-    sh_mem->merci=(struct merce *) (hlp);
-    hlp= (char *)(sh_mem->merci + sizeof(struct merce) * SO_MERCI);
-    sh_mem->porti = (struct porto *) ((char *) hlp);
-    hlp=(char *)(hlp+sizeof(struct porto *)*SO_PORTI);
+    hlp=shmat(mem_id,NULL,0600);
+    
+    sh_mem.merci=(struct merce *) (hlp);
+    hlp= (char *)(hlp + sizeof(struct merce)* SO_MERCI);
+    sh_mem.porti = (struct porto *) (hlp);
+    hlp= (char *)(hlp + sizeof(struct porto)* SO_PORTI);
     for(i=0;i<SO_PORTI;i++)
     {
-        sh_mem->porti[i].off=(struct merce*)hlp;
+        sh_mem_2.porti[i].off=(struct merce*)(hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        sh_mem->porti[i].ric=(struct merce*)hlp;
+        sh_mem_2.porti[i].ric=(struct merce*) (hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        for(k=0;k<MERCI_RIC_OFF;k++)
-        {
-            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
-            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
-            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
-            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
-        }
     }
-
-
-
-
-
     LOCK
-    sh_mem->porti[porto_id].idp=porto_id;
+    
+    sh_mem.porti[porto_id].idp=porto_id;
     UNLOCK
     /*TEST ERROR*/
     switch(porto_id){
@@ -215,8 +205,8 @@ int main(int argc, char * argv[]){
     }
     
     LOCK
-    sh_mem->porti[porto_id].coord.x = coor.x;
-    sh_mem->porti[porto_id].coord.y = coor.y;
+    sh_mem.porti[porto_id].coord.x = coor.x;
+    sh_mem.porti[porto_id].coord.y = coor.y;
     maxbanchine=rand() % SO_BANCHINE+1;
     semctl(bancid, porto_id, SETVAL, maxbanchine);
     printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, maxbanchine);

@@ -16,8 +16,10 @@
 #include <sys/wait.h>   
 struct sembuf sops;
 int sem_id; int mem_id; int banchine;
-struct shared_data * sh_mem;
+struct shared_data  sh_mem;
+struct shared_data  sh_mem_2;
 pid_t *porti;
+char* hlp;
 pid_t *navi;
 pid_t meteo;
 void resetSems(int sem_id);
@@ -33,7 +35,7 @@ void fine_sim(int signal)
         if(n<SO_PORTI)
             kill(porti[n],SIGINT);
     }
-    shmdt(sh_mem);
+    shmdt(hlp);
     shmctl(mem_id,0,IPC_RMID);
 
     printf("Deleting sem with id %d\n",sem_id);
@@ -67,7 +69,6 @@ void gennavi()
     char *c;
     char * argsnavi[]={NAVI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
-
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
         if(!(navi[i]=fork())){
@@ -110,14 +111,16 @@ void genporti()
 
 int main(int args,char* argv[]){
     
-    int i; int k; 
+    int i;
     struct sigaction sa;
-    char* hlp;
-    size_t j;
-    j=sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
-
-    srand(getpid());
+    
+    int j;
     setvar();
+    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+    
+    sh_mem_2.porti=calloc(sizeof(struct porto),SO_PORTI);
+    srand(getpid());
+    
     
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
@@ -135,42 +138,32 @@ int main(int args,char* argv[]){
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
     mem_id=shmget(getpid(),j,0600 | IPC_CREAT);
-    sh_mem=shmat(mem_id,NULL,0600);
-    
-    hlp=(char*)sh_mem;
-    hlp=(char*)(hlp+sizeof(struct shared_data));
-    sh_mem->merci=(struct merce *) (hlp);
-    hlp= (char *)(sh_mem->merci + sizeof(struct merce) * SO_MERCI);
-    sh_mem->porti = (struct porto *) ((char *) hlp);
-    hlp=(char *)(hlp+sizeof(struct porto *)*SO_PORTI);
+    hlp=shmat(mem_id,NULL,0600);
+    sh_mem.merci=(struct merce *) (hlp);
+    hlp= (char *)(hlp + sizeof(struct merce) * SO_MERCI);
+    sh_mem.porti = (struct porto *) ((char *) hlp);
+    hlp= (char *)(hlp + sizeof(struct porto) * SO_PORTI);
     for(i=0;i<SO_PORTI;i++)
     {
-        sh_mem->porti[i].off=(struct merce*)hlp;
+        sh_mem_2.porti[i].off=(struct merce*)hlp;
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        sh_mem->porti[i].ric=(struct merce*)hlp;
+        sh_mem_2.porti[i].ric=(struct merce*) hlp;
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        for(k=0;k<MERCI_RIC_OFF;k++)
-        {
-            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
-            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
-            sh_mem->porti[i].off[k].pid_navi=(pid_t *)hlp;
-            hlp=(char*)(hlp+sizeof(pid_t )*SO_NAVI);
-        }
-    } 
+    }
     printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", 5, sem_id);
     /*creazione merci*/
     LOCK
     
     for(i=0;i<SO_MERCI;i++)
     {
-        sh_mem-> merci[i].id=i;
-        sh_mem-> merci[i].size=rand()%(int)SO_SIZE+1;
-        sh_mem-> merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
-        sh_mem-> merci[i].num=0;
+        
+        sh_mem.merci[i].id=i;
+        sh_mem.merci[i].size=rand()%(int)SO_SIZE+1;
+        sh_mem.merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
+        sh_mem.merci[i].num=0;
     }
     UNLOCK
     genporti();     
-    
     gennavi();
     sops.sem_num = 2;            
     sops.sem_op = SO_NAVI+1;            

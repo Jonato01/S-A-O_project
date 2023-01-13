@@ -1,5 +1,5 @@
 so_porti 10
-so_navi 1
+so_navi 6   
 so_banchine 4
 so_capacity 120
 so_giorni 30
