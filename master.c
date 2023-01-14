@@ -143,12 +143,12 @@ void genmeteo(){
     char * argsmeteo[] = {METEO_PATH_NAME, NULL, NULL};
     if(!fork()){
         execve(METEO_PATH_NAME, argsmeteo, NULL);
-        pererror("Execve meteo er");
+        perror("Execve meteo er");
         exit(1);
     }
     sops.sem_num=1;
     sops.sem_op=-1;
-    semop(sem_id, &sops);
+    semop(sem_id, &sops,1);
 }
 
 int main(int args,char* argv[]){

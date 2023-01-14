@@ -34,8 +34,8 @@
 #define SO_FILL so_fill
 #define SO_STORM_DURATION so_storm_duration
 #define SO_SWELL_DURATION so_swell_duration
-
-int so_porti;int so_navi;int so_size;
+#define SO_MAELSTORM so_maelstorm
+int so_porti;int so_navi;int so_size; int so_maelstorm;
 int so_merci;int so_capacity;int so_speed;
 int so_banchine; int so_fill; int so_loadspeed;
 double so_lato; int so_giorni; int merci_ric_off;
@@ -148,6 +148,14 @@ void setvar(){
                 exit(EXIT_FAILURE);
             } else
                 so_min_vita=atoi(tr);
+        }else if((tr=strstr(line,"so_maelstorm"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF){
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_maelstorm=atoi(tr);
         } else if((tr=strstr(line,"so_size"))!=NULL) {
             while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
                 tr++;
@@ -174,10 +182,21 @@ void setvar(){
             }
             else
                 merci_ric_off=atoi(tr);
-        } else 
+        } else if((tr=strstr(line,"so_fill"))!=NULL){
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF)
+            {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            }
+            else
+                so_fill=atoi(tr);
+        }
+         else 
             printf("trovata variabile inutilizzata");
     }
-    so_fill=SO_PORTI*MERCI_RIC_OFF*(SO_SIZE/2+1)*3;
+    
 }
 
 #endif
