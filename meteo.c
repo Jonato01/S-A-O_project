@@ -32,29 +32,29 @@ void tempesta(){
     pid_t pid_nave;
     int id_nave;
     while(1){
-        msgrcv(msg_id, &msg, sizeof(int)*3, 1, IPC_NOWAIT);
-        if(!errno){
+        msgrcv(msg_id, &msg, sizeof(int)*2, 1, IPC_NOWAIT);
+        if(errno != 0){
             switch(errno){
                 case ENOMSG:
                     printf("Nessuna nave in viaggio, tempesta evitata.\n");
                     return;
                 default:
-                    printf("Errore nella lettura msg (tempesta 1)\n");
+                    perror("Errore nella lettura msg (tempesta 1)\n");
                     return;
             }
         }
         pid_nave = msg.pid;
         id_nave = msg.id;
         while(1){
-            msgrcv(msg_id, &msg, sizeof(int)*3, 2, IPC_NOWAIT);
-            if(!errno){
+            msgrcv(msg_id, &msg, sizeof(int)*2, 2, IPC_NOWAIT);
+            if(errno != 0){
                 switch(errno){
                     case ENOMSG:
                         printf("Tempesta scatenata su nave %d!\n", id_nave);
                         /*aggiungi segnale*/
                         return;
                     default:
-                        printf("Errore nella lettura msg (tempesta 2)\n");
+                        perror("Errore nella lettura msg (tempesta 2)\n");
                         return;
                 }
             }
@@ -66,6 +66,7 @@ void tempesta(){
 }
 
 void handle_time(int signal){
+    printf("METEO: inizia tempesta\n");
     tempesta();
 }
 
@@ -82,7 +83,7 @@ int main(){
     j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
     mem_id=shmget(getppid(),j,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
-    msg_id = msgget(getppid() -1, 0600);
+    msg_id = msgget(getppid() +3, 0600);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
@@ -96,5 +97,8 @@ int main(){
         sh_mem_2.porti[i].ric=(struct merce*) (hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
-    exit(0);
+
+    while(1){
+        
+    }
 }

@@ -34,7 +34,7 @@ struct coordinates{
 };
 
 struct my_msg_t {
-    long mytype; /*1 per le navi in viaggio, 2 per le navi arrivate*/
+    long int mytype; /*1 per le navi in viaggio, 2 per le navi arrivate*/
     int id;
     pid_t pid;
 };

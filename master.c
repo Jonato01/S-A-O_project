@@ -19,7 +19,7 @@ struct sembuf sops;
 int sem_id; int mem_id; int banchine;
 struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
-struct my_msg_t  msg;
+struct my_msg_t msg;
 int msg_id;
 pid_t *porti;
 char* hlp;
@@ -64,11 +64,24 @@ void fine_sim(int signal)
     kill(meteo, SIGINT);
     shmdt(hlp);
     shmctl(mem_id,0,IPC_RMID);
-
+    /*while(1){
+        msgrcv(msg_id, &msg, sizeof(int)*2, 0, IPC_NOWAIT);
+        if(!errno){
+            switch(errno){
+                case ENOMSG:
+                    printf("Svuotata coda\n");
+                    break;
+                default:
+                    printf("Errore nella lettura msg (master)\n");
+                    break;
+            }
+        }
+    }*/
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
     msg_print_stats(1, msg_id);
+
     printf("Deleting msg with id %d", msg_id);
     msgctl(msg_id, 0, IPC_RMID);
     exit(0);
@@ -161,7 +174,6 @@ int main(int args,char* argv[]){
     sh_mem_2.porti=calloc(sizeof(struct porto),SO_PORTI);
     srand(getpid());
     
-    
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
     
@@ -191,9 +203,10 @@ int main(int args,char* argv[]){
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
 
-    msg_id = msgget(getpid()-1, 0600 | IPC_CREAT);
+    msg_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
 
     printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msg with id:%d\n\n", 5, sem_id, msg_id);
+
     /*creazione merci*/
     LOCK
     
