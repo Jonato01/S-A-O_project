@@ -142,9 +142,8 @@ void genporti()
 
 void genmeteo(){
     char * argsmeteo[] = {METEO_PATH_NAME, NULL, NULL};
-    if(!fork()){
+    if(!(meteo=fork())){
         execve(METEO_PATH_NAME, argsmeteo, NULL);
-        perror("Execve meteo er");
         perror("Execve meteo er");
         exit(1);
     }
@@ -192,7 +191,7 @@ int main(int args,char* argv[]){
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
 
-    msg_id = msgget(getpid() + 2, 0600 | IPC_CREAT);
+    msg_id = msgget(getpid()-1, 0600 | IPC_CREAT);
 
     printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msg with id:%d\n\n", 5, sem_id, msg_id);
     /*creazione merci*/

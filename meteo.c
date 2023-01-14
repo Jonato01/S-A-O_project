@@ -24,7 +24,7 @@ int mem_id;
 char * hlp; 
 
 void handle_morte(int signal){
-    shmdt ( hlp );
+    shmdt (hlp);
     exit(0);
 }
 
@@ -82,7 +82,7 @@ int main(){
     j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
     mem_id=shmget(getppid(),j,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
-    msg_id = msgget(getppid() + 2, 0600);
+    msg_id = msgget(getppid() -1, 0600);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
@@ -96,8 +96,5 @@ int main(){
         sh_mem_2.porti[i].ric=(struct merce*) (hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
-
-    while(1){
-        
-    }
+    exit(0);
 }
