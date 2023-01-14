@@ -206,7 +206,7 @@ int main(int args,char* argv[]){
         sh_mem.merci[i].num=0;
     }
     UNLOCK
-    /*genmeteo();*/
+    genmeteo();
     genporti();     
     gennavi();
     sops.sem_num = 2;            
