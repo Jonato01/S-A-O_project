@@ -62,16 +62,16 @@ void handle_time(int signal)
 }
 
 void handle_storm(int signal){
-    int nano; int q;
-    q = SO_STORM_DURATION;
+    int nano; double q;
+    q = (double) SO_STORM_DURATION;
     nano=modf(q,&q);
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
     while(nanosleep(&rem, &rem) == -1){
-        if(errno == SIGUSR1 || errno == SIGUSR2)
+        if(errno == EINTR)
             printf("Oh no! Anyway...\n");  
         else
-            printf("Excuse me, what the fuck!?\n");
+            perror("Excuse me, what the fuck!?\n");
     }
     printf("Tempo di attesa: %d\n\n", SO_STORM_DURATION);
 }
@@ -252,10 +252,10 @@ void carico(){
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
     while(nanosleep(&rem, &rem) == -1){
-        if(errno == SIGUSR1 || errno == SIGUSR2)
+        if(errno == EINTR)
             printf("Oh no! Anyway...\n");   
         else
-            printf("Excuse me, what the fuck!?\n");
+            perror("Excuse me, what the fuck!?\n");
     }
     printf("Tempo di attesa: %f\n\n", work_time);
 }
@@ -294,10 +294,10 @@ void scarico(){
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
     while(nanosleep(&rem, &rem) == -1){
-        if(errno == SIGUSR1 || errno == SIGUSR2)
+        if(errno == EINTR)
             printf("Oh no! Anyway...\n");   
         else
-            printf("Excuse me, what the fuck!?\n");
+            perror("Excuse me, what the fuck!?\n");
     }
     
     printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f\n\n", barchetta.idn, barchetta.carico, barchetta.carico_pre, work_time);
@@ -369,10 +369,10 @@ int main (int argc, char * argv[]){
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
                 while(nanosleep(&rem, &rem) == -1){
-                    if(errno == SIGUSR1 || errno == SIGUSR2)
+                    if(errno == EINTR)
                         printf("Oh no! Anyway...\n");   
                     else
-                        printf("Excuse me, what the fuck!?\n");
+                        perror("Excuse me, what the fuck!?\n");
                 }
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
@@ -407,10 +407,10 @@ int main (int argc, char * argv[]){
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
                 while(nanosleep(&rem, &rem) == -1){
-                    if(errno == SIGUSR1 || errno == SIGUSR2)
+                    if(errno == EINTR)
                         printf("Oh no! Anyway...\n");   
                     else
-                        printf("Excuse me, what the fuck!?\n");
+                        perror("Excuse me, what the fuck!?\n");
                 }
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
