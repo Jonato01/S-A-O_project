@@ -345,7 +345,8 @@ int main (int argc, char * argv[]){
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
-    msg_id = msgget(getppid() + 2, 0600);
+    msg_id = msgget(getppid() -1, 0600);
+    printf("msg_id: %d", msg_id);
     bancid = semget(getppid()+2,SO_PORTI,0600|IPC_CREAT);
     mem_id=shmget(getppid(),j,0600);
     hlp=shmat(mem_id,NULL,0600);
