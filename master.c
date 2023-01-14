@@ -77,12 +77,13 @@ void fine_sim(int signal)
 void alarm_giorni(int signal)
 {
     int n;
+    kill(meteo, SIGUSR1);
     for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
-            if(n<SO_NAVI)
-                kill(navi[n],SIGUSR1);
-            if(n<SO_PORTI)
-                kill(porti[n],SIGUSR1);
-        }
+        if(n<SO_NAVI)
+            kill(navi[n],SIGUSR1);
+        if(n<SO_PORTI)
+            kill(porti[n],SIGUSR1);
+    }
 }
 
 void resetSems(int sem_id){
@@ -143,12 +144,9 @@ void genmeteo(){
     char * argsmeteo[] = {METEO_PATH_NAME, NULL, NULL};
     if(!fork()){
         execve(METEO_PATH_NAME, argsmeteo, NULL);
-        pererror("Execve meteo er");
+        perror("Execve meteo er");
         exit(1);
     }
-    sops.sem_num=1;
-    sops.sem_op=-1;
-    semop(sem_id, &sops);
 }
 
 int main(int args,char* argv[]){
@@ -208,6 +206,7 @@ int main(int args,char* argv[]){
         sh_mem.merci[i].num=0;
     }
     UNLOCK
+    genmeteo();
     genporti();     
     gennavi();
     sops.sem_num = 2;            

@@ -50,11 +50,11 @@ void tempesta(){
             if(!errno){
                 switch(errno){
                     case ENOMSG:
-                        printf("Tempesta scatenata su nave %d!", id_nave);
+                        printf("Tempesta scatenata su nave %d!\n", id_nave);
                         /*aggiungi segnale*/
                         return;
                     default:
-                        printf("Errore nella lettura msg (tempesta 2)");
+                        printf("Errore nella lettura msg (tempesta 2)\n");
                         return;
                 }
             }
@@ -63,7 +63,10 @@ void tempesta(){
             }
         }
     }
-    
+}
+
+void handle_time(int signal){
+    tempesta();
 }
 
 int main(){
@@ -72,6 +75,8 @@ int main(){
     bzero(&sa,sizeof(sa));
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);
+    sa.sa_handler=handle_time;
+    sigaction(SIGUSR1, &sa, NULL);
 
     srand(getpid());
     j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
@@ -95,7 +100,4 @@ int main(){
     while(1){
         
     }
-
-    shmdt ( hlp );
-    exit(0);
 }
