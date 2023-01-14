@@ -296,7 +296,7 @@ int main (int argc, char * argv[]){
     struct sigaction sa;
     size_t j;
     setvar();
-    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF_TOT)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto)); 
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
@@ -320,9 +320,9 @@ int main (int argc, char * argv[]){
     for(i=0;i<SO_PORTI;i++)
     {
         sh_mem_2.porti[i].off=(struct merce*)hlp;
-        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF_TOT);
         sh_mem_2.porti[i].ric=(struct merce*) hlp;
-        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF_TOT);
     }
     gennave();
 
@@ -417,7 +417,7 @@ int main (int argc, char * argv[]){
                 scarico();
                 printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_dest);
-                for(i = 0; i < MERCI_RIC_OFF; i++){
+                for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
                     if(merci_ric[i].id!=-1)
                     break;
                 }

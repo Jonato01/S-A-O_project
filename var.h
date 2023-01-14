@@ -24,6 +24,7 @@
 #define METEO_PATH_NAME "./meteo"
 #define SO_MERCI so_merci
 #define MERCI_RIC_OFF merci_ric_off
+#define MERCI_RIC_OFF_TOT MERCI_RIC_OFF*SO_GIORNI
 #define SO_SIZE so_size
 #define SO_MIN_VITA so_min_vita /*vita minima merci*/ 
 #define S0_MAX_VITA so_max_vita
