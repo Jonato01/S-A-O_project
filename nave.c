@@ -344,7 +344,7 @@ int main (int argc, char * argv[]){
                 msg.mytype = 1;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(int)*2, 0);
+                msgsnd(msg_id, &msg, sizeof(msg), 0);
                 if(errno != 0){
                     perror("Errore nave 1");
                 }
@@ -362,7 +362,7 @@ int main (int argc, char * argv[]){
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(int)*2, 0);
+                msgsnd(msg_id, &msg, sizeof(msg), 0);
                 if(errno != 0){
                     perror("Errore nave 2");
                 }
@@ -384,7 +384,7 @@ int main (int argc, char * argv[]){
                 msg.mytype = 1;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(int)*2, 0);
+                msgsnd(msg_id, &msg, sizeof(msg), 0);
                 if(errno != 0){
                     perror("Errore nave 3");
                 }
@@ -402,7 +402,7 @@ int main (int argc, char * argv[]){
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(int)*2, 0);
+                msgsnd(msg_id, &msg, sizeof(msg), 0);
                 if(errno != 0){
                     perror("Errore nave 4");
                 }

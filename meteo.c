@@ -32,7 +32,7 @@ void tempesta(){
     pid_t pid_nave;
     int id_nave;
     while(1){
-        msgrcv(msg_id, &msg, sizeof(int)*2, 1, IPC_NOWAIT);
+        msgrcv(msg_id, &msg, sizeof(msg), 1, IPC_NOWAIT);
         if(errno != 0){
             switch(errno){
                 case ENOMSG:
@@ -46,7 +46,7 @@ void tempesta(){
         pid_nave = msg.pid;
         id_nave = msg.id;
         while(1){
-            msgrcv(msg_id, &msg, sizeof(int)*2, 2, IPC_NOWAIT);
+            msgrcv(msg_id, &msg, sizeof(msg), 2, IPC_NOWAIT);
             if(errno != 0){
                 switch(errno){
                     case ENOMSG:
