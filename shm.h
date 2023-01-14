@@ -33,6 +33,12 @@ struct coordinates{
     double y;
 };
 
+struct my_msg_t {
+    long mytype; /*1 per le navi in viaggio, 2 per le navi arrivate*/
+    int id;
+    pid_t pid;
+};
+
 struct merce {
     int status; /*0: al porto, 1: su nave, 2: consegnato, 3: scaduta in porto*/
     int id;
@@ -63,8 +69,7 @@ struct porto {
 /*lunghezza shared memory*/
 struct shared_data {
     struct merce * merci;
-    struct porto * porti;
-   
+    struct porto * porti;  
 };
 
 #endif

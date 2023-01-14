@@ -13,11 +13,14 @@
 #include "shm.h"
 #include "var.h"
 #include <stdbool.h>
-#include <sys/wait.h>   
+#include <sys/wait.h>  
+#include <sys/msg.h> 
 struct sembuf sops;
 int sem_id; int mem_id; int banchine;
 struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
+struct my_msg_t  msg;
+int msg_id;
 pid_t *porti;
 char* hlp;
 pid_t *navi;
@@ -26,6 +29,29 @@ void resetSems(int sem_id);
 void fine_sim(int signal);
 void genporti();
 void gennavi();
+void genmeteo();
+
+static void msg_print_stats(int fd, int q_id) {
+	struct msqid_ds my_q_data;
+    msgctl(q_id, IPC_STAT, &my_q_data);
+	dprintf(fd, "--- IPC Message Queue ID: %8d, START ---\n", q_id);
+	dprintf(fd, "---------------------- Time of last msgsnd: %ld\n",
+		my_q_data.msg_stime);
+	dprintf(fd, "---------------------- Time of last msgrcv: %ld\n",
+		my_q_data.msg_rtime);
+	dprintf(fd, "---------------------- Time of last change: %ld\n",
+		my_q_data.msg_ctime);
+	dprintf(fd, "---------- Number of messages in the queue: %ld\n",
+		my_q_data.msg_qnum);
+	dprintf(fd, "- Max number of bytes allowed in the queue: %ld\n",
+		my_q_data.msg_qbytes);
+	dprintf(fd, "----------------------- PID of last msgsnd: %d\n",
+		my_q_data.msg_lspid);
+	dprintf(fd, "----------------------- PID of last msgrcv: %d\n",
+		my_q_data.msg_lrpid);  
+	dprintf(fd, "--- IPC Message Queue ID: %8d, END -----\n", q_id);
+}
+
 void fine_sim(int signal)
 {
     int n;
@@ -35,12 +61,16 @@ void fine_sim(int signal)
         if(n<SO_PORTI)
             kill(porti[n],SIGINT);
     }
+    kill(meteo, SIGINT);
     shmdt(hlp);
     shmctl(mem_id,0,IPC_RMID);
 
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
+    msg_print_stats(1, msg_id);
+    printf("Deleting msg with id %d", msg_id);
+    msgctl(msg_id, 0, IPC_RMID);
     exit(0);
 }
 
@@ -89,7 +119,7 @@ void genporti()
     
     int i;
     char *c;
-    char * argsnavi[]={PORTI_PATH_NAME,NULL,NULL};
+    char * argsporti[]={PORTI_PATH_NAME,NULL,NULL};
     c=calloc(1,sizeof(int));
     banchine = semget(getpid()+2,SO_PORTI,0600 | IPC_CREAT);
     /*creazione porti*/
@@ -97,8 +127,8 @@ void genporti()
         
         if(!(porti[i]=fork())){
             sprintf(c, "%d", i);
-            argsnavi[1]=c;
-            execve(PORTI_PATH_NAME,argsnavi,NULL);            
+            argsporti[1]=c;
+            execve(PORTI_PATH_NAME,argsporti,NULL);            
             perror("Execve porti er");
 	    	exit(1);
         }
@@ -107,6 +137,18 @@ void genporti()
         semop(sem_id,&sops,1);
         
     }
+}
+
+void genmeteo(){
+    char * argsmeteo[] = {METEO_PATH_NAME, NULL, NULL};
+    if(!fork()){
+        execve(METEO_PATH_NAME, argsmeteo, NULL);
+        pererror("Execve meteo er");
+        exit(1);
+    }
+    sops.sem_num=1;
+    sops.sem_op=-1;
+    semop(sem_id, &sops);
 }
 
 int main(int args,char* argv[]){
@@ -150,7 +192,10 @@ int main(int args,char* argv[]){
         sh_mem_2.porti[i].ric=(struct merce*) hlp;
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
-    printf("Creating shm with id: %d\nCreating sem with id:%d\n\n", 5, sem_id);
+
+    msg_id = msgget(getpid() + 2, 0600 | IPC_CREAT);
+
+    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msg with id:%d\n\n", 5, sem_id, msg_id);
     /*creazione merci*/
     LOCK
     

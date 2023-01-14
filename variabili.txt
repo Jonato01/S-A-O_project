@@ -1,5 +1,5 @@
 so_porti 10
-so_navi 6   
+so_navi 1   
 so_banchine 4
 so_capacity 120
 so_giorni 30
@@ -11,3 +11,5 @@ so_min_vita 20
 so_size 100
 so_speed 50
 merci_ric_off 6
+so_storm_duration 2
+so_swell_duration 3

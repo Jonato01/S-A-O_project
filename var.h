@@ -21,6 +21,7 @@
 #define SO_GIORNI so_giorni
 #define NAVI_PATH_NAME "./nave"
 #define PORTI_PATH_NAME "./porto"
+#define METEO_PATH_NAME "./meteo"
 #define SO_MERCI so_merci
 #define MERCI_RIC_OFF merci_ric_off
 #define SO_SIZE so_size
@@ -31,11 +32,15 @@
 #define SO_BANCHINE so_banchine
 #define SO_LOADSPEED so_loadspeed
 #define SO_FILL so_fill
+#define SO_STORM_DURATION so_storm_duration
+#define SO_SWELL_DURATION so_swell_duration
+
 int so_porti;int so_navi;int so_size;
 int so_merci;int so_capacity;int so_speed;
 int so_banchine; int so_fill; int so_loadspeed;
 double so_lato; int so_giorni; int merci_ric_off;
-int so_min_vita; int so_max_vita;
+int so_min_vita; int so_max_vita; int so_storm_duration;
+int so_swell_duration;
 void setvar(){
     FILE *varf;
     size_t len=0; char*line;char*tr;
@@ -119,6 +124,22 @@ void setvar(){
                 exit(EXIT_FAILURE);
             } else
                 so_merci=atoi(tr);
+        } else if((tr=strstr(line,"so_storm_duration"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_storm_duration=atoi(tr);
+        } else if((tr=strstr(line,"so_swell_duration"))!=NULL) {
+            while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
+                tr++;
+            if(*tr==10 || *tr==EOF) {
+                printf("err numero non trovato");
+                exit(EXIT_FAILURE);
+            } else
+                so_swell_duration=atoi(tr);
         } else if((tr=strstr(line,"so_min_vita"))!=NULL) {
             while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
                 tr++;

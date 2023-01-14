@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/msg.h> 
 #include <time.h>
 #include <signal.h>
 #include <strings.h>
@@ -29,9 +30,8 @@ void handle_morte(int signal)
     UNLOCK
     shmdt ( hlp );
     exit(0);
-
-
 }
+
 void handle_time(int signal)
 {
     int i;
@@ -51,6 +51,7 @@ void handle_time(int signal)
     }
     UNLOCK
 }
+
 void creaPorto(){
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
     int i;

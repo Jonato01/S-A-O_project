@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/msg.h> 
 #include <stdbool.h>
 #include <signal.h>
 #include <strings.h>
@@ -19,7 +20,8 @@
 struct sembuf sops;
 struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
-int sem_id;
+struct my_msg_t  msg;
+int sem_id; int msg_id;
 struct merce *merci_ric;
 char* hlp;
 int nmerci;
@@ -57,6 +59,43 @@ void handle_time(int signal)
             }
         }
     }
+}
+
+int my_msg_send(int queue, const struct my_msg_t* my_msgbuf, size_t msg_length){
+    msgsnd(queue, my_msgbuf, msg_length, 0);
+    if(!errno){
+        switch (errno) {
+            case EAGAIN:
+                dprintf(2,
+                    "Queue is full and IPC_NOWAIT was set to have a non-blocking msgsnd()\nFix it by:\n(1) making sure that some process read messages, or\n(2)changing the queue size by msgctl()\n");
+                return(-1);
+            case EACCES:
+                dprintf(2,
+                "No write permission to the queue.\nFix it by adding permissions properly\n");
+                return(-1);
+            case EFAULT:
+                dprintf(2,
+                    "The address of the message isn't accessible\n");
+                return(-1);
+            case EIDRM:
+                dprintf(2,
+                    "The queue was removed\n");
+                return(-1);
+            case EINTR:
+                dprintf(2,
+                    "The process got unblocked by a signal, while waiting on a full queue\n");
+                return(-1);
+            case ENOMEM || E2BIG:
+                dprintf(2, "Raggiunti limiti di sistema di msg!\n");
+                return(-1);
+            case EINVAL:
+                dprintf(2, "msqid was invalid, or msgsz was less than 0.");
+                return(-1);
+            default:
+                dprintf(2, "Errore nella msg!\n");
+        }
+    }
+	return(0);
 }
 
 void swap(int* xp, int* yp)
@@ -306,6 +345,7 @@ int main (int argc, char * argv[]){
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
+    msg_id = msgget(getppid() + 2, 0600);
     bancid = semget(getppid()+2,SO_PORTI,0600|IPC_CREAT);
     mem_id=shmget(getppid(),j,0600);
     hlp=shmat(mem_id,NULL,0600);
@@ -337,6 +377,11 @@ int main (int argc, char * argv[]){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
+                msg.mytype = 1;
+                msg.id = barchetta.idn;
+                msg.pid = getpid();
+                my_msg_send(msg_id, &msg, sizeof(int)*3);
+
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
                 rem.tv_sec = route_time;
@@ -347,6 +392,10 @@ int main (int argc, char * argv[]){
                 else
                     printf("Excuse me, what the fuck!?\n");
                 }
+                msg.mytype = 2;
+                msg.id = barchetta.idn;
+                msg.pid = getpid();
+                my_msg_send(msg_id, &msg, sizeof(int)*3);
                 LOCK
                 barchetta.coord = sh_mem.porti[barchetta.idp_part].coord;
                 UNLOCK
@@ -360,8 +409,11 @@ int main (int argc, char * argv[]){
 
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
-                
                 UNLOCK
+                msg.mytype = 1;
+                msg.id = barchetta.idn;
+                msg.pid = getpid();
+                my_msg_send(msg_id, &msg, sizeof(int)*3);
 
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
@@ -373,9 +425,12 @@ int main (int argc, char * argv[]){
                     else
                         printf("Excuse me, what the fuck!?\n");
                 }
+                msg.mytype = 2;
+                msg.id = barchetta.idn;
+                msg.pid = getpid();
+                my_msg_send(msg_id, &msg, sizeof(int)*3);
                 LOCK
                 barchetta.coord = sh_mem.porti[barchetta.idp_dest].coord;
-        
                 UNLOCK
 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
