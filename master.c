@@ -157,7 +157,7 @@ int main(int args,char* argv[]){
     
     int j;
     setvar();
-    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
+    j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF_TOT)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
     
     sh_mem_2.porti=calloc(sizeof(struct porto),SO_PORTI);
     srand(getpid());
@@ -187,9 +187,9 @@ int main(int args,char* argv[]){
     for(i=0;i<SO_PORTI;i++)
     {
         sh_mem_2.porti[i].off=(struct merce*)hlp;
-        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
-        sh_mem_2.porti[i].ric=(struct merce*) hlp;
-        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF_TOT);
+        sh_mem_2.porti[i].ric=(struct merce*)hlp;
+        hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF_TOT);
     }
 
     msg_id = msgget(getpid() + 2, 0600 | IPC_CREAT);
@@ -207,7 +207,7 @@ int main(int args,char* argv[]){
         sh_mem.merci[i].num=0;
     }
     UNLOCK
-    genmeteo();
+    /*genmeteo();*/
     genporti();     
     gennavi();
     sops.sem_num = 2;            
