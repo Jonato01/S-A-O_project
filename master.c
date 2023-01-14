@@ -145,6 +145,7 @@ void genmeteo(){
     if(!fork()){
         execve(METEO_PATH_NAME, argsmeteo, NULL);
         perror("Execve meteo er");
+        perror("Execve meteo er");
         exit(1);
     }
 }
