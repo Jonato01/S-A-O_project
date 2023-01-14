@@ -51,7 +51,7 @@ void tempesta(){
                 switch(errno){
                     case ENOMSG:
                         printf("Tempesta scatenata su nave %d!\n", id_nave);
-                        /*aggiungi segnale*/
+                        kill(pid_nave, SIGUSR2);
                         return;
                     default:
                         perror("Errore nella lettura msg (tempesta 2)\n");
@@ -98,7 +98,5 @@ int main(){
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
 
-    while(1){
-        
-    }
+    while(1);
 }

@@ -61,41 +61,19 @@ void handle_time(int signal)
     }
 }
 
-int my_msg_send(int queue, const struct my_msg_t* my_msgbuf, size_t msg_length){
-    msgsnd(queue, my_msgbuf, msg_length, 0);
-    if(!errno){
-        switch (errno) {
-            case EAGAIN:
-                dprintf(2,
-                    "Queue is full and IPC_NOWAIT was set to have a non-blocking msgsnd()\nFix it by:\n(1) making sure that some process read messages, or\n(2)changing the queue size by msgctl()\n");
-                return(-1);
-            case EACCES:
-                dprintf(2,
-                "No write permission to the queue.\nFix it by adding permissions properly\n");
-                return(-1);
-            case EFAULT:
-                dprintf(2,
-                    "The address of the message isn't accessible\n");
-                return(-1);
-            case EIDRM:
-                dprintf(2,
-                    "The queue was removed\n");
-                return(-1);
-            case EINTR:
-                dprintf(2,
-                    "The process got unblocked by a signal, while waiting on a full queue\n");
-                return(-1);
-            case ENOMEM || E2BIG:
-                dprintf(2, "Raggiunti limiti di sistema di msg!\n");
-                return(-1);
-            case EINVAL:
-                dprintf(2, "msqid was invalid, or msgsz was less than 0.");
-                return(-1);
-            default:
-                dprintf(2, "Errore nella msg!\n");
-        }
+void handle_storm(int signal){
+    int nano; int q;
+    q = SO_STORM_DURATION;
+    nano=modf(q,&q);
+    rem.tv_sec = q;
+    rem.tv_nsec = nano*1e9;
+    while(nanosleep(&rem, &rem) == -1){
+        if(errno == SIGUSR1 || errno == SIGUSR2)
+            printf("Oh no! Anyway...\n");  
+        else
+            printf("Excuse me, what the fuck!?\n");
     }
-	return(0);
+    printf("Tempo di attesa: %d\n\n", SO_STORM_DURATION);
 }
 
 void swap(int* xp, int* yp)
@@ -274,7 +252,7 @@ void carico(){
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
     while(nanosleep(&rem, &rem) == -1){
-        if(errno = SIGUSR1)
+        if(errno == SIGUSR1 || errno == SIGUSR2)
             printf("Oh no! Anyway...\n");   
         else
             printf("Excuse me, what the fuck!?\n");
@@ -316,7 +294,7 @@ void scarico(){
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
     while(nanosleep(&rem, &rem) == -1){
-        if(errno = SIGUSR1)
+        if(errno == SIGUSR1 || errno == SIGUSR2)
             printf("Oh no! Anyway...\n");   
         else
             printf("Excuse me, what the fuck!?\n");
@@ -366,6 +344,8 @@ int main (int argc, char * argv[]){
     sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
+    sa.sa_handler=handle_storm;
+    sigaction(SIGUSR2, &sa, NULL);
 
     while((barchetta.idp_dest = getdest()) != -1){
 
@@ -380,9 +360,8 @@ int main (int argc, char * argv[]){
                 msg.mytype = 1;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 1");
+                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                    printf("Errore nave 1\n");
                 }
 
                 route_time = distance / SO_SPEED;
@@ -390,17 +369,16 @@ int main (int argc, char * argv[]){
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
                 while(nanosleep(&rem, &rem) == -1){
-                    if(errno = SIGUSR1)
-                    printf("Oh no! Anyway...\n");   
-                else
-                    printf("Excuse me, what the fuck!?\n");
+                    if(errno == SIGUSR1 || errno == SIGUSR2)
+                        printf("Oh no! Anyway...\n");   
+                    else
+                        printf("Excuse me, what the fuck!?\n");
                 }
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 2");
+                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                    printf("Errore nave 2\n");
                 }
 
                 LOCK
@@ -420,9 +398,8 @@ int main (int argc, char * argv[]){
                 msg.mytype = 1;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 3");
+                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                    printf("Errore nave 3\n");
                 }
 
                 route_time = distance / SO_SPEED;
@@ -430,7 +407,7 @@ int main (int argc, char * argv[]){
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
                 while(nanosleep(&rem, &rem) == -1){
-                    if(errno = SIGUSR1)
+                    if(errno == SIGUSR1 || errno == SIGUSR2)
                         printf("Oh no! Anyway...\n");   
                     else
                         printf("Excuse me, what the fuck!?\n");
@@ -438,9 +415,8 @@ int main (int argc, char * argv[]){
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 4");
+                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                    printf("Errore nave 4\n");
                 }
                 
                 LOCK
@@ -472,7 +448,7 @@ int main (int argc, char * argv[]){
             }
         }
     }
-    /*CONTINUARE*/
+
     while(1);
 
     exit(0);
