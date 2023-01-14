@@ -32,29 +32,29 @@ void tempesta(){
     pid_t pid_nave;
     int id_nave;
     while(1){
-        msgrcv(msg_id, &msg, sizeof(int)*3, 1, IPC_NOWAIT);
-        if(!errno){
+        msgrcv(msg_id, &msg, sizeof(int)*2, 1, IPC_NOWAIT);
+        if(errno != 0){
             switch(errno){
                 case ENOMSG:
                     printf("Nessuna nave in viaggio, tempesta evitata.\n");
                     return;
                 default:
-                    printf("Errore nella lettura msg (tempesta 1)\n");
+                    perror("Errore nella lettura msg (tempesta 1)\n");
                     return;
             }
         }
         pid_nave = msg.pid;
         id_nave = msg.id;
         while(1){
-            msgrcv(msg_id, &msg, sizeof(int)*3, 2, IPC_NOWAIT);
-            if(!errno){
+            msgrcv(msg_id, &msg, sizeof(int)*2, 2, IPC_NOWAIT);
+            if(errno != 0){
                 switch(errno){
                     case ENOMSG:
                         printf("Tempesta scatenata su nave %d!\n", id_nave);
                         /*aggiungi segnale*/
                         return;
                     default:
-                        printf("Errore nella lettura msg (tempesta 2)\n");
+                        perror("Errore nella lettura msg (tempesta 2)\n");
                         return;
                 }
             }
@@ -66,6 +66,7 @@ void tempesta(){
 }
 
 void handle_time(int signal){
+    printf("METEO: inizia tempesta\n");
     tempesta();
 }
 
@@ -96,5 +97,8 @@ int main(){
         sh_mem_2.porti[i].ric=(struct merce*) (hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
-    while(1);
+
+    while(1){
+        
+    }
 }
