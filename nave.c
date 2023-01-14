@@ -61,6 +61,43 @@ void handle_time(int signal)
     }
 }
 
+int my_msg_send(int queue, const struct my_msg_t* my_msgbuf, size_t msg_length){
+    msgsnd(queue, my_msgbuf, msg_length, 0);
+    if(!errno){
+        switch (errno) {
+            case EAGAIN:
+                dprintf(2,
+                    "Queue is full and IPC_NOWAIT was set to have a non-blocking msgsnd()\nFix it by:\n(1) making sure that some process read messages, or\n(2)changing the queue size by msgctl()\n");
+                return(-1);
+            case EACCES:
+                dprintf(2,
+                "No write permission to the queue.\nFix it by adding permissions properly\n");
+                return(-1);
+            case EFAULT:
+                dprintf(2,
+                    "The address of the message isn't accessible\n");
+                return(-1);
+            case EIDRM:
+                dprintf(2,
+                    "The queue was removed\n");
+                return(-1);
+            case EINTR:
+                dprintf(2,
+                    "The process got unblocked by a signal, while waiting on a full queue\n");
+                return(-1);
+            case ENOMEM || E2BIG:
+                dprintf(2, "Raggiunti limiti di sistema di msg!\n");
+                return(-1);
+            case EINVAL:
+                dprintf(2, "msqid was invalid, or msgsz was less than 0.");
+                return(-1);
+            default:
+                dprintf(2, "Errore nella msg!\n");
+        }
+    }
+	return(0);
+}
+
 void swap(int* xp, int* yp)
 {
     int temp = *xp;
@@ -303,13 +340,12 @@ int main (int argc, char * argv[]){
     ord=calloc(SO_PORTI,sizeof(int));
     /*sigaction(SIGINT, &sa, NULL);*/
     sigaction(SIGUSR1, &sa, NULL);
-    merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  
+    merci_ric=calloc(MERCI_RIC_OFF_TOT,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
-    msg_id = msgget(getppid() +3, 0600);
-    printf("msg_id: %d\n", msg_id);
+    msg_id = msgget(getppid() + 3, 0600);
     bancid = semget(getppid()+2,SO_PORTI,0600|IPC_CREAT);
     mem_id=shmget(getppid(),j,0600);
     hlp=shmat(mem_id,NULL,0600);
@@ -421,7 +457,7 @@ int main (int argc, char * argv[]){
                     if(merci_ric[i].id!=-1)
                     break;
                 }
-                if(i==MERCI_RIC_OFF)
+                if(i==MERCI_RIC_OFF_TOT)
                 printf("Nave %d: merci prenotate esaurite\n",barchetta.idn);
                 else{
                 printf("Ancora prenotate: ");

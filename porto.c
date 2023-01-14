@@ -88,7 +88,7 @@ void genric()
                 break;    
             }
             off=true;
-            for(j=0; j<MERCI_RIC_OFF && off;j++)
+            for(j=0; j<MERCI_RIC_OFF_TOT && off && sh_mem_2.porti[porto_id].off[j].size ;j++)
             {
                 if(r==sh_mem_2.porti[porto_id].off[j].id)
                     off=false;
@@ -113,7 +113,8 @@ void genric()
 
 void genmerci()
 {
-    int i; int x; int r; 
+    int i; int x; int r; int j; 
+    bool ric;
     srand(getpid());
     for(i=0;i<MERCI_RIC_OFF;i++)
     {
@@ -121,16 +122,22 @@ void genmerci()
         r=rand()%SO_MERCI;
             for(x = 0; x < i; x++)
             {
-                if(sh_mem_2.porti[porto_id].off[x].id==r)
+                if(sh_mem_2.porti[porto_id].off[x].id==r  )
                 break;
             }
-            if(x==i){
+            ric=true;
+            for(j=0; j<MERCI_RIC_OFF_TOT && ric && sh_mem_2.porti[porto_id].ric[j].size ;j++)
+            {
+                if(r==sh_mem_2.porti[porto_id].off[j].id)
+                    ric=false;
+            }
+            if(x==i && ric){
             sh_mem_2.porti[porto_id].off[x].id=r;
-            sh_mem_2.porti[porto_id].off[x].vita=sh_mem. merci[sh_mem_2.porti[porto_id].off[x].id].vita;
-            sh_mem_2.porti[porto_id].off[x].size=sh_mem. merci[sh_mem_2.porti[porto_id].off[x].id].size;
+            sh_mem_2.porti[porto_id].off[x].vita=sh_mem.merci[sh_mem_2.porti[porto_id].off[x].id].vita;
+            sh_mem_2.porti[porto_id].off[x].size=sh_mem.merci[sh_mem_2.porti[porto_id].off[x].id].size;
             sh_mem_2.porti[porto_id].off[x].pre=0;
             
-            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF)/sh_mem_2.porti[porto_id].off[x].size;
+            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF/SO_GIORNI)/sh_mem_2.porti[porto_id].off[x].size;
             if(r == 0)
                 r++;
             sh_mem_2.porti[porto_id].off[x].num=r;
