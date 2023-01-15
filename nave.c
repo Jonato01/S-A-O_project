@@ -28,6 +28,7 @@ int nmerci;
 int bancid;
 struct nave barchetta;
 struct timespec rem;
+bool travelling; bool working; bool waiting_storm;
 
 int *ord; /* ID porti in ordine di distanza*/
 
@@ -58,22 +59,33 @@ void handle_time(int signal)
                 }
             }
         }
+        if(travelling || working || waiting_storm){
+            printf("Oh no! Anyway...\n");
+            nanosleep(&rem, &rem);
+        }
     }
 }
 
 void handle_storm(int signal){
     int nano; double q;
+
+    if(travelling){
+        printf("Nave %d: Tempesta mentre viaggiavo\n", barchetta.idn);
+        nanosleep(&rem, &rem);
+        travelling = false;
+    }
+
     q = (double) SO_STORM_DURATION;
     nano=modf(q,&q);
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
-    while(nanosleep(&rem, &rem) == -1){
-        if(errno == EINTR)
-            printf("Oh no! Anyway...\n");  
-        else
-            perror("Excuse me, what the fuck!?\n");
-    }
-    printf("Tempo di attesa: %d\n\n", SO_STORM_DURATION);
+
+    waiting_storm = true;
+    printf("Nave %d, in tempesta per %d\n", barchetta.idn, SO_STORM_DURATION);
+    nanosleep(&rem, &rem);
+    waiting_storm = false;
+
+    printf("Nave %d: tempesta passata. %d\n\n");
 }
 
 void swap(int* xp, int* yp)
@@ -251,12 +263,9 @@ void carico(){
     nano=modf(q,&q);
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
-    while(nanosleep(&rem, &rem) == -1){
-        if(errno == EINTR)
-            printf("Oh no! Anyway...\n");   
-        else
-            perror("Excuse me, what the fuck!?\n");
-    }
+    working = true;
+    nanosleep(&rem, &rem);
+    working = false;
     printf("Tempo di attesa: %f\n\n", work_time);
 }
 
@@ -293,12 +302,9 @@ void scarico(){
     nano=modf(q,&q);
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
-    while(nanosleep(&rem, &rem) == -1){
-        if(errno == EINTR)
-            printf("Oh no! Anyway...\n");   
-        else
-            perror("Excuse me, what the fuck!?\n");
-    }
+    working = true;
+    nanosleep(&rem, &rem);
+    working = false;
     
     printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f\n\n", barchetta.idn, barchetta.carico, barchetta.carico_pre, work_time);
 }
@@ -357,28 +363,26 @@ int main (int argc, char * argv[]){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
-                msg.mytype = 1;
-                msg.id = barchetta.idn;
+                msg.id = barchetta.idn+1;
                 msg.pid = getpid();
                 if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
-                    printf("Errore nave 1\n");
+                    perror("Errore nave 1\n");
+                } else {
+                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msg_id, msg.id);
                 }
 
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
-                while(nanosleep(&rem, &rem) == -1){
-                    if(errno == EINTR)
-                        printf("Oh no! Anyway...\n");   
-                    else
-                        perror("Excuse me, what the fuck!?\n");
-                }
-                msg.mytype = 2;
-                msg.id = barchetta.idn;
-                msg.pid = getpid();
-                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
-                    printf("Errore nave 2\n");
+                travelling = true;
+                nanosleep(&rem, &rem);
+                travelling = false;
+
+                if(msgrcv(msg_id, &msg, sizeof(msg), barchetta.idn+1, 0) == -1){
+                    perror("Errore nave 2\n");
+                } else {
+                    printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
                 }
 
                 LOCK
@@ -395,28 +399,26 @@ int main (int argc, char * argv[]){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
                 UNLOCK
-                msg.mytype = 1;
-                msg.id = barchetta.idn;
+                msg.id = barchetta.idn+1;
                 msg.pid = getpid();
                 if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
-                    printf("Errore nave 3\n");
+                    perror("Errore nave 3\n");
+                } else {
+                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msg_id, msg.id);
                 }
 
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
-                while(nanosleep(&rem, &rem) == -1){
-                    if(errno == EINTR)
-                        printf("Oh no! Anyway...\n");   
-                    else
-                        perror("Excuse me, what the fuck!?\n");
-                }
-                msg.mytype = 2;
-                msg.id = barchetta.idn;
-                msg.pid = getpid();
-                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
-                    printf("Errore nave 4\n");
+                travelling = true,
+                nanosleep(&rem, &rem);
+                travelling = false;
+                 
+                if(msgrcv(msg_id, &msg, sizeof(msg), barchetta.idn+1, 0) == -1){
+                    perror("Errore nave 4\n");
+                } else {
+                    printf("Nave %d: rimossa dalla coda\n", barchetta.idn);
                 }
                 
                 LOCK

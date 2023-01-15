@@ -1,8 +1,8 @@
 so_porti 10
-so_navi 20   
+so_navi 10   
 so_banchine 4
 so_capacity 120
-so_giorni 30
+so_giorni 10
 so_lato 100.00
 so_loadspeed 200
 so_max_vita 30

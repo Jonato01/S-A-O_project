@@ -70,7 +70,7 @@ void fine_sim(int signal)
 
     while(msgrcv(msg_id, &msg, sizeof(msg), 0, 0) >= 0);
     msg_print_stats(1, msg_id);
-    
+
     printf("Deleting msg with id %d", msg_id);
     msgctl(msg_id, 0, IPC_RMID);
     exit(0);
