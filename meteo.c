@@ -24,6 +24,7 @@ int mem_id;
 char * hlp; 
 
 void handle_morte(int signal){
+    printf("Ammazzando il meteo...\n");
     shmdt (hlp);
     exit(0);
 }
@@ -31,7 +32,7 @@ void handle_morte(int signal){
 static void msg_print_stats(int fd, int q_id) {
 	struct msqid_ds my_q_data;
     msgctl(q_id, IPC_STAT, &my_q_data);
-	dprintf(fd, "--- IPC Message Queue ID: %8d, START ---\n", q_id);
+	dprintf(fd, "METEO:\n--- IPC Message Queue ID: %8d, START ---\n", q_id);
 	dprintf(fd, "---------------------- Time of last msgsnd: %ld\n",
 		my_q_data.msg_stime);
 	dprintf(fd, "---------------------- Time of last msgrcv: %ld\n",
@@ -72,8 +73,6 @@ int main(){
     int i; size_t j;
     struct sigaction sa;
     bzero(&sa,sizeof(sa));
-    sa.sa_handler=handle_morte;
-    sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
 
@@ -96,6 +95,9 @@ int main(){
         sh_mem_2.porti[i].ric=(struct merce*) (hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
+
+    sa.sa_handler=handle_morte;
+    sigaction(SIGINT, &sa, NULL);
 
     while(1);
 }
