@@ -419,7 +419,10 @@ int main (int argc, char * argv[]){
                 UNLOCK
                 msg.mytype = 1;
                 msg.id = barchetta.idn;
+                
+                perror("Errore nave 15\n");
                 msg.pid = getpid();
+                perror("Errore nave 10\n");
                 msgsnd(msg_id, &msg, sizeof(msg), 0);
                 if(errno != 0){
                     perror("Errore nave 3");
@@ -438,6 +441,7 @@ int main (int argc, char * argv[]){
                 msg.mytype = 2;
                 msg.id = barchetta.idn;
                 msg.pid = getpid();
+                perror("Errore nave 1\n");
                 msgsnd(msg_id, &msg, sizeof(msg), 0);
                 if(errno != 0){
                     perror("Errore nave 4");
