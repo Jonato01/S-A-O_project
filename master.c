@@ -34,7 +34,7 @@ void genmeteo();
 static void msg_print_stats(int fd, int q_id) {
 	struct msqid_ds my_q_data;
     msgctl(q_id, IPC_STAT, &my_q_data);
-	dprintf(fd, "--- IPC Message Queue ID: %8d, START ---\n", q_id);
+	dprintf(fd, "MASTER:\n--- IPC Message Queue ID: %8d, START ---\n", q_id);
 	dprintf(fd, "---------------------- Time of last msgsnd: %ld\n",
 		my_q_data.msg_stime);
 	dprintf(fd, "---------------------- Time of last msgrcv: %ld\n",
@@ -64,23 +64,9 @@ void fine_sim(int signal)
     kill(meteo, SIGINT);
     shmdt(hlp);
     shmctl(mem_id,0,IPC_RMID);
-    /*while(1){
-        msgrcv(msg_id, &msg, sizeof(int)*2, 0, IPC_NOWAIT);
-        if(!errno){
-            switch(errno){
-                case ENOMSG:
-                    printf("Svuotata coda\n");
-                    break;
-                default:
-                    printf("Errore nella lettura msg (master)\n");
-                    break;
-            }
-        }
-    }*/
     printf("Deleting sem with id %d\n",sem_id);
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
-    msg_print_stats(1, msg_id);
 
     printf("Deleting msg with id %d", msg_id);
     msgctl(msg_id, 0, IPC_RMID);

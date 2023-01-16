@@ -28,6 +28,7 @@ int nmerci;
 int bancid;
 struct nave barchetta;
 struct timespec rem;
+bool travelling; bool working; bool waiting_storm;
 
 int *ord; /* ID porti in ordine di distanza*/
 
@@ -58,44 +59,33 @@ void handle_time(int signal)
                 }
             }
         }
+        if(travelling || working || waiting_storm){
+            printf("Oh no! Anyway...\n");
+            nanosleep(&rem, &rem);
+        }
     }
 }
 
-int my_msg_send(int queue, const struct my_msg_t* my_msgbuf, size_t msg_length){
-    msgsnd(queue, my_msgbuf, msg_length, 0);
-    if(!errno){
-        switch (errno) {
-            case EAGAIN:
-                dprintf(2,
-                    "Queue is full and IPC_NOWAIT was set to have a non-blocking msgsnd()\nFix it by:\n(1) making sure that some process read messages, or\n(2)changing the queue size by msgctl()\n");
-                return(-1);
-            case EACCES:
-                dprintf(2,
-                "No write permission to the queue.\nFix it by adding permissions properly\n");
-                return(-1);
-            case EFAULT:
-                dprintf(2,
-                    "The address of the message isn't accessible\n");
-                return(-1);
-            case EIDRM:
-                dprintf(2,
-                    "The queue was removed\n");
-                return(-1);
-            case EINTR:
-                dprintf(2,
-                    "The process got unblocked by a signal, while waiting on a full queue\n");
-                return(-1);
-            case ENOMEM || E2BIG:
-                dprintf(2, "Raggiunti limiti di sistema di msg!\n");
-                return(-1);
-            case EINVAL:
-                dprintf(2, "msqid was invalid, or msgsz was less than 0.");
-                return(-1);
-            default:
-                dprintf(2, "Errore nella msg!\n");
-        }
+void handle_storm(int signal){
+    int nano; double q;
+
+    if(travelling){
+        printf("Nave %d: Tempesta mentre viaggiavo\n", barchetta.idn);
+        nanosleep(&rem, &rem);
+        travelling = false;
     }
-	return(0);
+
+    q = (double) SO_STORM_DURATION;
+    nano=modf(q,&q);
+    rem.tv_sec = q;
+    rem.tv_nsec = nano*1e9;
+
+    waiting_storm = true;
+    printf("Nave %d, in tempesta per %d\n", barchetta.idn, SO_STORM_DURATION);
+    nanosleep(&rem, &rem);
+    waiting_storm = false;
+
+    printf("Nave %d: tempesta passata\n\n", barchetta.idn);
 }
 
 void swap(int* xp, int* yp)
@@ -273,12 +263,9 @@ void carico(){
     nano=modf(q,&q);
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
-    while(nanosleep(&rem, &rem) == -1){
-        if(errno = SIGUSR1)
-            printf("Oh no! Anyway...\n");   
-        else
-            printf("Excuse me, what the fuck!?\n");
-    }
+    working = true;
+    nanosleep(&rem, &rem);
+    working = false;
     printf("Tempo di attesa: %f\n\n", work_time);
 }
 
@@ -315,12 +302,9 @@ void scarico(){
     nano=modf(q,&q);
     rem.tv_sec = q;
     rem.tv_nsec = nano*1e9;
-    while(nanosleep(&rem, &rem) == -1){
-        if(errno = SIGUSR1)
-            printf("Oh no! Anyway...\n");   
-        else
-            printf("Excuse me, what the fuck!?\n");
-    }
+    working = true;
+    nanosleep(&rem, &rem);
+    working = false;
     
     printf("Nave %d:\t ancora a bordo %f ton di merce\n\tancora prenotate %f ton di merce\n\ttempo di attesa: %f\n\n", barchetta.idn, barchetta.carico, barchetta.carico_pre, work_time);
 }
@@ -366,6 +350,8 @@ int main (int argc, char * argv[]){
     sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
+    sa.sa_handler=handle_storm;
+    sigaction(SIGUSR2, &sa, NULL);
 
     while((barchetta.idp_dest = getdest()) != -1){
 
@@ -377,30 +363,26 @@ int main (int argc, char * argv[]){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
-                msg.mytype = 1;
-                msg.id = barchetta.idn;
+                msg.id = barchetta.idn+1;
                 msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 1");
+                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                    perror("Errore nave 1\n");
+                } else {
+                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msg_id, msg.id);
                 }
 
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
-                while(nanosleep(&rem, &rem) == -1){
-                    if(errno = SIGUSR1)
-                    printf("Oh no! Anyway...\n");   
-                else
-                    printf("Excuse me, what the fuck!?\n");
-                }
-                msg.mytype = 2;
-                msg.id = barchetta.idn;
-                msg.pid = getpid();
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 2");
+                travelling = true;
+                nanosleep(&rem, &rem);
+                travelling = false;
+
+                if(msgrcv(msg_id, &msg, sizeof(msg), barchetta.idn+1, 0) == -1){
+                    perror("Errore nave 2\n");
+                } else {
+                    printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
                 }
 
                 LOCK
@@ -417,34 +399,26 @@ int main (int argc, char * argv[]){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
                 UNLOCK
-                msg.mytype = 1;
-                msg.id = barchetta.idn;
-                
-                perror("Errore nave 15\n");
+                msg.id = barchetta.idn+1;
                 msg.pid = getpid();
-                perror("Errore nave 10\n");
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 3");
+                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                    perror("Errore nave 3\n");
+                } else {
+                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msg_id, msg.id);
                 }
 
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
-                while(nanosleep(&rem, &rem) == -1){
-                    if(errno = SIGUSR1)
-                        printf("Oh no! Anyway...\n");   
-                    else
-                        printf("Excuse me, what the fuck!?\n");
-                }
-                msg.mytype = 2;
-                msg.id = barchetta.idn;
-                msg.pid = getpid();
-                perror("Errore nave 1\n");
-                msgsnd(msg_id, &msg, sizeof(msg), 0);
-                if(errno != 0){
-                    perror("Errore nave 4");
+                travelling = true,
+                nanosleep(&rem, &rem);
+                travelling = false;
+                 
+                if(msgrcv(msg_id, &msg, sizeof(msg), barchetta.idn+1, 0) == -1){
+                    perror("Errore nave 4\n");
+                } else {
+                    printf("Nave %d: rimossa dalla coda\n", barchetta.idn);
                 }
                 
                 LOCK
@@ -462,21 +436,22 @@ int main (int argc, char * argv[]){
                     break;
                 }
                 if(i==MERCI_RIC_OFF_TOT)
-                printf("Nave %d: merci prenotate esaurite\n",barchetta.idn);
+                    printf("Nave %d: merci prenotate esaurite\n",barchetta.idn);
                 else{
-                printf("Ancora prenotate: ");
-                for(i = 0; i < MERCI_RIC_OFF; i++){
-                    if(merci_ric[i].id!=-1)
-                    printf("%d ton di %d + ", merci_ric[i].size * merci_ric[i].num, merci_ric[i].id);
+                    printf("Ancora prenotate: ");
+                    for(i = 0; i < MERCI_RIC_OFF; i++){
+                        if(merci_ric[i].id!=-1)
+                        printf("%d ton di %d + ", merci_ric[i].size * merci_ric[i].num, merci_ric[i].id);
+                    }
+                    printf("\n");
                 }
-                printf("\n");
-            }} else {
+            } else {
                 printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest);
                 barchetta.carico_pre = 0;
             }
         }
     }
-    /*CONTINUARE*/
+
     while(1);
 
     exit(0);

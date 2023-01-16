@@ -24,44 +24,43 @@ int mem_id;
 char * hlp; 
 
 void handle_morte(int signal){
+    printf("Ammazzando il meteo...\n");
     shmdt (hlp);
     exit(0);
 }
 
+static void msg_print_stats(int fd, int q_id) {
+	struct msqid_ds my_q_data;
+    msgctl(q_id, IPC_STAT, &my_q_data);
+	dprintf(fd, "METEO:\n--- IPC Message Queue ID: %8d, START ---\n", q_id);
+	dprintf(fd, "---------------------- Time of last msgsnd: %ld\n",
+		my_q_data.msg_stime);
+	dprintf(fd, "---------------------- Time of last msgrcv: %ld\n",
+		my_q_data.msg_rtime);
+	dprintf(fd, "---------------------- Time of last change: %ld\n",
+		my_q_data.msg_ctime);
+	dprintf(fd, "---------- Number of messages in the queue: %ld\n",
+		my_q_data.msg_qnum);
+	dprintf(fd, "- Max number of bytes allowed in the queue: %ld\n",
+		my_q_data.msg_qbytes);
+	dprintf(fd, "----------------------- PID of last msgsnd: %d\n",
+		my_q_data.msg_lspid);
+	dprintf(fd, "----------------------- PID of last msgrcv: %d\n",
+		my_q_data.msg_lrpid);  
+	dprintf(fd, "--- IPC Message Queue ID: %8d, END -----\n", q_id);
+}
+
 void tempesta(){
-    pid_t pid_nave;
-    int id_nave;
-    while(1){
-        msgrcv(msg_id, &msg, sizeof(msg), 1, IPC_NOWAIT);
-        if(errno != 0){
-            switch(errno){
-                case ENOMSG:
-                    printf("Nessuna nave in viaggio, tempesta evitata.\n");
-                    return;
-                default:
-                    perror("Errore nella lettura msg (tempesta 1)\n");
-                    return;
-            }
+    msg_print_stats(1, msg_id);
+    if(msgrcv(msg_id, &msg, sizeof(msg), 0, IPC_NOWAIT) == -1){
+        if(errno == ENOMSG){
+            printf("Nessuna nave in viaggio, tempesta evitata\n");
+        } else {
+            perror("Errore in tempesta");
         }
-        pid_nave = msg.pid;
-        id_nave = msg.id;
-        while(1){
-            msgrcv(msg_id, &msg, sizeof(msg), 2, IPC_NOWAIT);
-            if(errno != 0){
-                switch(errno){
-                    case ENOMSG:
-                        printf("Tempesta scatenata su nave %d!\n", id_nave);
-                        /*aggiungi segnale*/
-                        return;
-                    default:
-                        perror("Errore nella lettura msg (tempesta 2)\n");
-                        return;
-                }
-            }
-            if(msg.id == id_nave){
-                break;
-            }
-        }
+    } else {
+        printf("Scatenata tempesta su nave %d!\n", (int) msg.id-1);
+        kill(msg.pid, SIGUSR2);
     }
 }
 
@@ -74,8 +73,6 @@ int main(){
     int i; size_t j;
     struct sigaction sa;
     bzero(&sa,sizeof(sa));
-    sa.sa_handler=handle_morte;
-    sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
 
@@ -84,6 +81,7 @@ int main(){
     mem_id=shmget(getppid(),j,0600);
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
     msg_id = msgget(getppid() +3, 0600);
+    printf("Meteo: msg_id: %d\n", msg_id);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
@@ -98,7 +96,8 @@ int main(){
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
 
-    while(1){
-        
-    }
+    sa.sa_handler=handle_morte;
+    sigaction(SIGINT, &sa, NULL);
+
+    while(1);
 }
