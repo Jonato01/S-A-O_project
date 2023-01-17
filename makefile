@@ -2,7 +2,9 @@ CFLAGS=-Wall -std=c89 -Wpedantic
 OPTIONS=
 
 
-all: 	clean master nave porto meteo run
+all: 	clear clean master nave porto meteo run
+clear:
+	clear
 run: master nave porto
 	./master
 master: master.o 
