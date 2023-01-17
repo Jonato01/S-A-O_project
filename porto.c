@@ -98,8 +98,8 @@ void genric()
                 sh_mem_2.porti[porto_id].ric[x].vita=sh_mem. merci[sh_mem_2.porti[porto_id].ric[x].id].vita;
                 sh_mem_2.porti[porto_id].ric[x].size=sh_mem. merci[sh_mem_2.porti[porto_id].ric[x].id].size;
                 sh_mem_2.porti[porto_id].ric[x].pre=false;
-                r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF/SO_GIORNI)/sh_mem_2.porti[porto_id].ric[x].size;
-                if((SO_FILL/SO_PORTI/MERCI_RIC_OFF/SO_GIORNI)%sh_mem_2.porti[porto_id].ric[x].size)
+                r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF_TOT/SO_GIORNI)/sh_mem_2.porti[porto_id].ric[x].size;
+                if((SO_FILL/SO_PORTI/MERCI_RIC_OFF_TOT/SO_GIORNI)%sh_mem_2.porti[porto_id].ric[x].size)
                     r++;
                 sh_mem_2.porti[porto_id].ric[x].num=r;
                 break;
@@ -137,7 +137,7 @@ void genmerci()
             sh_mem_2.porti[porto_id].off[x].size=sh_mem.merci[sh_mem_2.porti[porto_id].off[x].id].size;
             sh_mem_2.porti[porto_id].off[x].pre=0;
             
-            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF/SO_GIORNI)/sh_mem_2.porti[porto_id].off[x].size;
+            r=(SO_FILL/SO_PORTI/MERCI_RIC_OFF_TOT/SO_GIORNI)/sh_mem_2.porti[porto_id].off[x].size;
             if(r == 0)
                 r++;
             sh_mem_2.porti[porto_id].off[x].num=r;
