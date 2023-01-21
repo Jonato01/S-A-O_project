@@ -20,15 +20,16 @@
 struct sembuf sops;
 struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
-struct my_msg_t  msg;
-int sem_id; int msg_id;
+struct my_msg_t  msgN;
+struct my_msg_t msgP;
+int sem_id; int msgN_id; int msgP_id;
 struct merce *merci_ric;
 char* hlp;
 int nmerci;
 int bancid;
 struct nave barchetta;
 struct timespec rem;
-bool travelling; bool working; bool waiting_storm;
+bool travelling; bool working; bool waiting_storm; bool waiting_swell;
 
 int *ord; /* ID porti in ordine di distanza*/
 
@@ -59,7 +60,7 @@ void handle_time(int signal)
                 }
             }
         }
-        if(travelling || working || waiting_storm){
+        if(travelling || working || waiting_storm || waiting_swell){
             printf("Oh no! Anyway...\n");
             nanosleep(&rem, &rem);
         }
@@ -81,11 +82,33 @@ void handle_storm(int signal){
     rem.tv_nsec = nano*1e9;
 
     waiting_storm = true;
-    printf("Nave %d, in tempesta per %d\n", barchetta.idn, SO_STORM_DURATION);
+    printf("Nave %d, in tempesta per %d secondi\n", barchetta.idn, SO_STORM_DURATION);
     nanosleep(&rem, &rem);
     waiting_storm = false;
 
     printf("Nave %d: tempesta passata\n\n", barchetta.idn);
+}
+
+void handle_swell(int signal){
+    int nano; double q;
+
+    if(working){
+        printf("Nave %d: Mareggiata mentre caricavo/scaricavo\n", barchetta.idn);
+        nanosleep(&rem, &rem);
+        working = false;
+    }
+
+    q = (double) SO_SWELL_DURATION;
+    nano=modf(q,&q);
+    rem.tv_sec = q;
+    rem.tv_nsec = nano*1e9;
+
+    waiting_swell = true;
+    printf("Nave %d, porto in mareggiata per %d\n", barchetta.idn, SO_SWELL_DURATION);
+    nanosleep(&rem, &rem);
+    waiting_swell = false;
+
+    printf("Nave %d: mareggiata passata\n\n", barchetta.idn);
 }
 
 void swap(int* xp, int* yp)
@@ -329,7 +352,8 @@ int main (int argc, char * argv[]){
     srand(getpid());
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
-    msg_id = msgget(getppid() + 3, 0600);
+    msgN_id = msgget(getppid() + 3, 0600);
+    msgP_id = msgget(getppid() + 4, 0600);
     bancid = semget(getppid()+2,SO_PORTI,0600|IPC_CREAT);
     mem_id=shmget(getppid(),j,0600);
     hlp=shmat(mem_id,NULL,0600);
@@ -352,6 +376,8 @@ int main (int argc, char * argv[]){
     sigaction(SIGUSR1, &sa, NULL);
     sa.sa_handler=handle_storm;
     sigaction(SIGUSR2, &sa, NULL);
+    sa.sa_handler=handle_swell;
+    sigaction(SIGWINCH, &sa, NULL);
 
     while((barchetta.idp_dest = getdest()) != -1){
 
@@ -363,12 +389,12 @@ int main (int argc, char * argv[]){
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
-                msg.id = barchetta.idn+1;
-                msg.pid = getpid();
-                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                msgN.id = barchetta.idn+1;
+                msgN.pid = getpid();
+                if(msgsnd(msgN_id, &msgN, sizeof(msgN), 0) == -1){
                     perror("Errore nave 1\n");
                 } else {
-                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msg_id, msg.id);
+                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msgN_id, msgN.id);
                 }
 
                 route_time = distance / SO_SPEED;
@@ -379,7 +405,7 @@ int main (int argc, char * argv[]){
                 nanosleep(&rem, &rem);
                 travelling = false;
 
-                if(msgrcv(msg_id, &msg, sizeof(msg), barchetta.idn+1, 0) == -1){
+                if(msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0) == -1){
                     perror("Errore nave 2\n");
                 } else {
                     printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
@@ -392,19 +418,33 @@ int main (int argc, char * argv[]){
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
                 LOCK_BAN (barchetta.idp_part);
                 printf("Nave %d: inizio a caricare dal porto %d...\n", barchetta.idn, barchetta.idp_part);
+
+                msgP.id = barchetta.idp_part+1;
+                msgP.pid = getpid();
+                if(msgsnd(msgP_id, &msgP, sizeof(msgP), 0) == -1){
+                    perror("Errore sndmsg carico");
+                } else {
+                    printf("Nave %d: aggiunto porto %d alla coda carico\n", barchetta.idn, barchetta.idp_part);
+                }
                 carico();
+                if(msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_part+1, 0) == -1){
+                    perror("Errore rcvmsg carico\n");
+                } else {
+                    printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
+                }
+
                 printf("Nave %d: finito di caricare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_part);
 
                 LOCK
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
                 UNLOCK
-                msg.id = barchetta.idn+1;
-                msg.pid = getpid();
-                if(msgsnd(msg_id, &msg, sizeof(msg), 0) == -1){
+                msgN.id = barchetta.idp_dest+1;
+                msgN.pid = getpid();
+                if(msgsnd(msgN_id, &msgN, sizeof(msgN), 0) == -1){
                     perror("Errore nave 3\n");
                 } else {
-                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msg_id, msg.id);
+                    printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msgN_id, msgN.id);
                 }
 
                 route_time = distance / SO_SPEED;
@@ -415,7 +455,7 @@ int main (int argc, char * argv[]){
                 nanosleep(&rem, &rem);
                 travelling = false;
                  
-                if(msgrcv(msg_id, &msg, sizeof(msg), barchetta.idn+1, 0) == -1){
+                if(msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0) == -1){
                     perror("Errore nave 4\n");
                 } else {
                     printf("Nave %d: rimossa dalla coda\n", barchetta.idn);
@@ -428,7 +468,21 @@ int main (int argc, char * argv[]){
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
                 LOCK_BAN (barchetta.idp_dest);
                 printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
+
+                msgP.id = barchetta.idp_dest +1;
+                msgP.pid = getpid();
+                if(msgsnd(msgP_id, &msgP, sizeof(msgP), 0) == -1){
+                    perror("Errore sndmsg scarico");
+                } else {
+                    printf("Nave %d: aggiunto porto %d alla coda\n", barchetta.idn, barchetta.idp_part);
+                }
                 scarico();
+                if(msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_dest+1, 0) == -1){
+                    perror("Errore rcvmsg scarico\n");
+                } else {
+                    printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_dest);
+                }
+
                 printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_dest);
                 for(i = 0; i < MERCI_RIC_OFF_TOT; i++){

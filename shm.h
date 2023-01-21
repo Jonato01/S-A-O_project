@@ -59,7 +59,7 @@ struct nave
 
 struct porto {
     int idp;
-    
+
     struct coordinates coord;
     struct merce *ric;
     struct merce *off;

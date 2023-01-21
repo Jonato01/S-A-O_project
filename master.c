@@ -19,8 +19,10 @@ struct sembuf sops;
 int sem_id; int mem_id; int banchine;
 struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
-struct my_msg_t msg;
-int msg_id;
+struct my_msg_t msgN;
+struct my_msg_t msgP;
+int msgN_id;
+int msgP_id;
 pid_t *porti;
 char* hlp;
 pid_t *navi;
@@ -30,27 +32,6 @@ void fine_sim(int signal);
 void genporti();
 void gennavi();
 void genmeteo();
-
-static void msg_print_stats(int fd, int q_id) {
-	struct msqid_ds my_q_data;
-    msgctl(q_id, IPC_STAT, &my_q_data);
-	dprintf(fd, "MASTER:\n--- IPC Message Queue ID: %8d, START ---\n", q_id);
-	dprintf(fd, "---------------------- Time of last msgsnd: %ld\n",
-		my_q_data.msg_stime);
-	dprintf(fd, "---------------------- Time of last msgrcv: %ld\n",
-		my_q_data.msg_rtime);
-	dprintf(fd, "---------------------- Time of last change: %ld\n",
-		my_q_data.msg_ctime);
-	dprintf(fd, "---------- Number of messages in the queue: %ld\n",
-		my_q_data.msg_qnum);
-	dprintf(fd, "- Max number of bytes allowed in the queue: %ld\n",
-		my_q_data.msg_qbytes);
-	dprintf(fd, "----------------------- PID of last msgsnd: %d\n",
-		my_q_data.msg_lspid);
-	dprintf(fd, "----------------------- PID of last msgrcv: %d\n",
-		my_q_data.msg_lrpid);  
-	dprintf(fd, "--- IPC Message Queue ID: %8d, END -----\n", q_id);
-}
 
 void fine_sim(int signal)
 {
@@ -68,8 +49,10 @@ void fine_sim(int signal)
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
 
-    printf("Deleting msg with id %d", msg_id);
-    msgctl(msg_id, 0, IPC_RMID);
+    printf("Deleting msgN with id %d", msgN_id);
+    msgctl(msgN_id, 0, IPC_RMID);
+    printf("Deleting msgP with id %d", msgP_id);
+    msgctl(msgP_id, 0, IPC_RMID);
     exit(0);
 }
 
@@ -189,9 +172,10 @@ int main(int args,char* argv[]){
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF_TOT);
     }
 
-    msg_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
+    msgN_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
+    msgP_id = msgget(getpid() + 4, 0600 | IPC_CREAT);
 
-    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msg with id:%d\n\n", 5, sem_id, msg_id);
+    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\n\n", 5, sem_id, msgN_id, msgP_id);
 
     /*creazione merci*/
     LOCK
