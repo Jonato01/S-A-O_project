@@ -21,28 +21,25 @@ struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
+struct my_msg_t msgM;
 int msgN_id;
 int msgP_id;
+int msgM_id;
 pid_t *porti;
 char* hlp;
 pid_t *navi;
 pid_t meteo;
-void resetSems(int sem_id);
-void fine_sim(int signal);
-void genporti();
-void gennavi();
-void genmeteo();
 
 void fine_sim(int signal)
 {
     int n;
+    kill(meteo, SIGINT);
     for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
         if(n<SO_NAVI)
             kill(navi[n],SIGINT);
         if(n<SO_PORTI)
             kill(porti[n],SIGINT);
     }
-    kill(meteo, SIGINT);
     shmdt(hlp);
     shmctl(mem_id,0,IPC_RMID);
     printf("Deleting sem with id %d\n",sem_id);
@@ -53,6 +50,8 @@ void fine_sim(int signal)
     msgctl(msgN_id, 0, IPC_RMID);
     printf("Deleting msgP with id %d", msgP_id);
     msgctl(msgP_id, 0, IPC_RMID);
+    printf("Deleting msgM with id %d", msgP_id);
+    msgctl(msgM_id, 0, IPC_RMID);
     exit(0);
 }
 
@@ -75,12 +74,23 @@ void resetSems(int sem_id){
     }
 }
 
+void shuffle(pid_t *arr, int len) {
+    int i;
+    srand(time(0));
+    for (i = len - 1; i > 0; i--) {
+        pid_t j = rand() % (i + 1);
+        pid_t temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+}
+
 void gennavi()
 {
-    int i;
-    
+    int i; int j;
     char *c;
     char * argsnavi[]={NAVI_PATH_NAME,NULL,NULL};
+    int * ord = calloc(SO_PORTI, sizeof(int));
     c=calloc(1,sizeof(int));
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
@@ -91,10 +101,24 @@ void gennavi()
             perror("Execve navi er");
 	    	exit(1);
         }
+        ord[i] = navi[i];
         sops.sem_num=1;
         sops.sem_op=-1;
         semop(sem_id,&sops,1);
     }
+
+    shuffle(navi, SO_NAVI);
+
+    for(i = 0; i < SO_NAVI; i++){
+        for(j = 0; j < SO_NAVI; j++){
+            if(ord[i] == navi[j]){
+                break;
+            }
+        }
+        msgM.id = j;
+        msgM.pid = navi[j];
+        msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
+    } 
 }
 
 void genporti()
@@ -174,12 +198,12 @@ int main(int args,char* argv[]){
 
     msgN_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
     msgP_id = msgget(getpid() + 4, 0600 | IPC_CREAT);
+    msgM_id = msgget(getpid() + 5, 0600 | IPC_CREAT);
 
-    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\n\n", 5, sem_id, msgN_id, msgP_id);
+    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\nCreating msgP with id:%d\n\n", 5, sem_id, msgN_id, msgP_id, msgM_id);
 
     /*creazione merci*/
     LOCK
-    
     for(i=0;i<SO_MERCI;i++)
     {
         
@@ -189,9 +213,10 @@ int main(int args,char* argv[]){
         sh_mem.merci[i].num=0;
     }
     UNLOCK
-    genmeteo();
     genporti();     
     gennavi();
+    genmeteo();
+
     sops.sem_num = 2;            
     sops.sem_op = SO_NAVI+1;            
     semop(sem_id,&sops, 1);
@@ -199,7 +224,6 @@ int main(int args,char* argv[]){
     sigaction(SIGALRM, &sa, NULL);
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
-    
     
     for(i=0;i<=SO_GIORNI;i++){
         

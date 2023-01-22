@@ -18,7 +18,7 @@ sops.sem_op=1;              \
 semop(bancid,&sops, 1);
 
 #define DISTANCE(a, b) sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2))
-/*0:    protezione shm  1: creazione porti in ordine 2: controllare fine di ogni figlio*/
+/*0:    protezione shm  1: creazione porti in ordine 2: controllare fine di ogni figlio, 3: far partire navi e meteo insieme*/
 #define LOCK                    \
     sops.sem_num = 0;            \
     sops.sem_op = -1;            \

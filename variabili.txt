@@ -14,3 +14,4 @@ so_speed 50
 merci_ric_off 6
 so_storm_duration 2
 so_swell_duration 3
+so_maelstrom 20

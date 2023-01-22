@@ -13,6 +13,7 @@
 #include <math.h>
 #include <errno.h>
 #include <sys/msg.h>
+#include <stdbool.h>
 #include "shm.h"
 #include "var.h"
 struct sembuf sops;
@@ -21,10 +22,14 @@ struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
+struct my_msg_t msgM;
+struct timespec rem;
 int mem_id;
 int msgN_id;
 int msgP_id;
+int msgM_id;
 char * hlp; 
+bool flag;
 
 void handle_morte(int signal){
     printf("Ammazzando il meteo...\n");
@@ -80,7 +85,7 @@ void mareggiata(){
             }
             break;
         } else {    
-            printf("Porto %d in mareggiata! %d\n", (int)msgP.id-1);
+            printf("Porto %d in mareggiata!\n", (int)msgP.id-1);
             kill(msgP.pid, SIGWINCH /* consigliato da chatGPT come SIGUSR3*/);
             c++;
         }
@@ -93,11 +98,30 @@ void handle_time(int signal){
     tempesta();
     printf("METEO: inizia mareggiata\n");
     mareggiata();
+    nanosleep(&rem, &rem);
+}
+
+void handle_mael(int signal){
+    printf("METEO: inizia vortice\n");
+    srand(getpid());
+    msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
+    if(errno == 0){
+        printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id, (int)msgM.pid);
+        kill(msgM.pid, SIGINT);
+    } else if(errno == ENOMSG){
+        printf("Non ci sono più navi!\n");
+        flag = false;
+    } else {
+        perror("METEO: errore in handle_mael");
+    }
 }
 
 int main(){
     int i; size_t j;
+    double x, fractpart, intpart;
     struct sigaction sa;
+    flag = true;
+    setvar();
     bzero(&sa,sizeof(sa));
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
@@ -109,6 +133,8 @@ int main(){
     printf("Meteo: msgN_id: %d\n", msgN_id);
     msgP_id = msgget(getppid() +4, 0600);
     printf("Meteo: msgP_id: %d\n", msgP_id);
+    msgM_id = msgget(getppid() +5, 0600);
+    printf("Meteo: msgP_id: %d\n", msgM_id);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
@@ -125,6 +151,17 @@ int main(){
 
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);
+    sa.sa_handler=handle_mael;
+    sigaction(SIGALRM, &sa, NULL);
 
-    while(1);
+    while(1){
+        if(flag){
+            x = (double) SO_MAELSTROM / 24;
+            fractpart=modf(x,&intpart);
+            rem.tv_sec = intpart;
+            rem.tv_nsec = fractpart*1e9;
+            nanosleep(&rem, &rem);
+            raise(SIGALRM);
+        }
+    }
 }

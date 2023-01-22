@@ -40,8 +40,8 @@ void handle_morte(int signal){
     semop(sem_id,&sops, 1);
     UNLOCK
     shmdt ( hlp );
+    printf("La nave %d ha finito di vivere\n", barchetta.idn);
     exit(0);
-
 }
 
 void handle_time(int signal)
