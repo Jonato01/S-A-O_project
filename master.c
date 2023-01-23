@@ -216,7 +216,6 @@ int main(int args,char* argv[]){
     genporti();     
     gennavi();
     genmeteo();
-
     sops.sem_num = 2;            
     sops.sem_op = SO_NAVI+1;            
     semop(sem_id,&sops, 1);

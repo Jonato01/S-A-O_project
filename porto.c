@@ -6,6 +6,7 @@
 #include <sys/msg.h> 
 #include <time.h>
 #include <signal.h>
+#include <errno.h>
 #include <strings.h>
 #include <stdbool.h>
 #include <sys/ipc.h>
@@ -20,6 +21,9 @@ struct coordinates coor;
 char* hlp;
 int sem_id;
 int porto_id; 
+int giorno;
+void genric();
+void genmerci();
 void handle_morte(int signal)
 {
     
@@ -34,21 +38,21 @@ void handle_morte(int signal)
 
 void handle_time(int signal)
 {
-    int i;
-    int j;
+    int i=0;
+    giorno++;
+    
     LOCK
-    for(i=0;i<MERCI_RIC_OFF;i++)
+    for(i=0;i<MERCI_RIC_OFF_TOT && sh_mem_2.porti[porto_id].off[i].size;i++)
     {
         sh_mem_2.porti[porto_id].off[i].vita--;
         if(sh_mem_2.porti[porto_id].off[i].vita==0)
         {
-            for(j = 0; j < SO_NAVI; j++){
-                
-            }
             bzero(&sh_mem_2.porti[porto_id].off[i],sizeof(struct merce));
             /*Far scadere bene le merci*/
         }
     }
+    genmerci();
+    genric();
     UNLOCK
 }
 
@@ -78,17 +82,17 @@ void genric()
     bool off;
      
     srand(getpid());
-    for(i=0;i<MERCI_RIC_OFF;i++)
+    for(i=MERCI_RIC_OFF*giorno;i<(MERCI_RIC_OFF+MERCI_RIC_OFF*giorno);i++)
     {
         while(1){
         r=rand()%SO_MERCI;
-            for(x = 0; x < i; x++)
+            for(x = MERCI_RIC_OFF*giorno; x < i; x++)
             {
                 if(sh_mem_2.porti[porto_id].ric[x].id==r)
                 break;    
             }
             off=true;
-            for(j=0; j<MERCI_RIC_OFF_TOT && off && sh_mem_2.porti[porto_id].off[j].size ;j++)
+            for(j=0; j<(MERCI_RIC_OFF_TOT+MERCI_RIC_OFF*giorno) && off && sh_mem_2.porti[porto_id].off[j].size ;j++)
             {
                 if(r==sh_mem_2.porti[porto_id].off[j].id)
                     off=false;
@@ -116,19 +120,19 @@ void genmerci()
     int i; int x; int r; int j; 
     bool ric;
     srand(getpid());
-    for(i=0;i<MERCI_RIC_OFF;i++)
+     for(i=MERCI_RIC_OFF*giorno;i<(MERCI_RIC_OFF+MERCI_RIC_OFF*giorno);i++)
     {
         while(1){
         r=rand()%SO_MERCI;
-            for(x = 0; x < i; x++)
+            for(x = MERCI_RIC_OFF*giorno; x < i; x++)
             {
-                if(sh_mem_2.porti[porto_id].off[x].id==r  )
+                if(sh_mem_2.porti[porto_id].off[x].id==r)
                 break;
             }
             ric=true;
-            for(j=0; j<MERCI_RIC_OFF_TOT && ric && sh_mem_2.porti[porto_id].ric[j].size ;j++)
+            for(j=0; j<(MERCI_RIC_OFF*giorno) && ric && sh_mem_2.porti[porto_id].ric[j].size ;j++)
             {
-                if(r==sh_mem_2.porti[porto_id].off[j].id)
+                if(r==sh_mem_2.porti[porto_id].ric[j].id)
                     ric=false;
             }
             if(x==i && ric){
@@ -210,7 +214,7 @@ int main(int argc, char * argv[]){
             creaPorto();
             break;
     }
-    
+    giorno=0;
     LOCK
     sh_mem.porti[porto_id].coord.x = coor.x;
     sh_mem.porti[porto_id].coord.y = coor.y;
@@ -229,6 +233,6 @@ int main(int argc, char * argv[]){
     semop(sem_id,&sops,1);
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);    
-    while(1);
-
+    while(1)
+    sleep(SO_GIORNI);
     }

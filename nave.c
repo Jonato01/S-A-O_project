@@ -141,7 +141,7 @@ void ordinaporti(struct coordinates coord){
 int containsOff(int portoid, int merceid){
     int i;
 
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].off[i].size==0; i++){
         if(sh_mem_2.porti[portoid].off[i].id == merceid){
             return i;
         }
@@ -151,7 +151,7 @@ int containsOff(int portoid, int merceid){
 
 int containsRic(int portoid, int merceid){
     int i;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].ric[i].size==0; i++){
         if(sh_mem_2.porti[portoid].ric[i].id == merceid){
             return i;
         }
