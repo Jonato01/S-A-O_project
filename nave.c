@@ -265,7 +265,7 @@ void carico(){
     int t = 0;
     double q; double nano;
     for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
-        if(merci_ric[i].id != 0){
+        if(merci_ric[i].id != -1){
             y = containsOff(barchetta.idp_part, merci_ric[i].id);
             if(y != -1){
                 merci_ric[i].status = 1;
