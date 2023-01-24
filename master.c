@@ -22,7 +22,7 @@ struct shared_data  sh_mem_2;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
 struct my_msg_t msgM;
-int msgN_id;
+int msgN_id; int msg_id;
 int msgP_id;
 int msgM_id;
 pid_t *porti;
@@ -33,9 +33,20 @@ pid_t meteo;
 void fine_sim(int signal)
 {
     int n;
+    struct my_msg_t msgM;
+    struct msqid_ds my_q_data;
+    msgctl(msg_id, IPC_STAT, &my_q_data);
+    if(my_q_data.msg_qnum)
+    {
+        msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
+        if(errno)
+        perror("err msg maelstorm");
+        navi[msgM.id-1]=-1;
+    }
     kill(meteo, SIGINT);
-    for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
-        if(n<SO_NAVI)
+
+    for(n=0; n<SO_PORTI || n<SO_NAVI;n++){
+        if(n<SO_NAVI && navi[n]!=-1)
             kill(navi[n],SIGINT);
         if(n<SO_PORTI)
             kill(porti[n],SIGINT);
@@ -48,6 +59,8 @@ void fine_sim(int signal)
 
     printf("Deleting msgN with id %d", msgN_id);
     msgctl(msgN_id, 0, IPC_RMID);
+     printf("Deleting msgN with id %d", msg_id);
+    msgctl(msg_id, 0, IPC_RMID);
     printf("Deleting msgP with id %d", msgP_id);
     msgctl(msgP_id, 0, IPC_RMID);
     printf("Deleting msgM with id %d", msgP_id);
@@ -58,12 +71,27 @@ void fine_sim(int signal)
 void alarm_giorni(int signal)
 {
     int n;
+    struct my_msg_t msgM;
+    struct msqid_ds my_q_data;
+    msgctl(msg_id, IPC_STAT, &my_q_data);
+    if(my_q_data.msg_qnum)
+    {
+        msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
+        if(errno)
+        perror("err msg maelstorm");
+        navi[msgM.id-1]=-1;
+    }
     kill(meteo, SIGUSR1);
-    for(n=0;n<SO_NAVI || n<SO_PORTI;n++){
-        if(n<SO_NAVI)
+    for(n=0;n<SO_PORTI;n++)
+    {   
+        kill(porti[n],SIGUSR1);
+        sops.sem_num=2;
+        sops.sem_op=-1;
+        semop(sem_id,&sops,1);
+    }
+    for(n=0;n<SO_NAVI;n++){
+        if(navi[n]!=-1)
             kill(navi[n],SIGUSR1);
-        if(n<SO_PORTI)
-            kill(porti[n],SIGUSR1);
     }
 }
 
@@ -169,7 +197,6 @@ int main(int args,char* argv[]){
     
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
-    
     navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
@@ -183,6 +210,7 @@ int main(int args,char* argv[]){
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
     mem_id=shmget(getpid(),j,0600 | IPC_CREAT);
+   
     hlp=shmat(mem_id,NULL,0600);
     sh_mem.merci=(struct merce *) (hlp);
     hlp= (char *)(hlp + sizeof(struct merce) * SO_MERCI);
@@ -199,7 +227,7 @@ int main(int args,char* argv[]){
     msgN_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
     msgP_id = msgget(getpid() + 4, 0600 | IPC_CREAT);
     msgM_id = msgget(getpid() + 5, 0600 | IPC_CREAT);
-
+    msg_id  = msgget(getpid() + 6, 0600 | IPC_CREAT);
     printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\nCreating msgP with id:%d\n\n", 5, sem_id, msgN_id, msgP_id, msgM_id);
 
     /*creazione merci*/
@@ -207,9 +235,9 @@ int main(int args,char* argv[]){
     for(i=0;i<SO_MERCI;i++)
     {
         
-        sh_mem.merci[i].id=i;
-        sh_mem.merci[i].size=rand()%(int)SO_SIZE+1;
-        sh_mem.merci[i].vita=rand()%(int)(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
+        sh_mem.merci[i].id=i+1;
+        sh_mem.merci[i].size=rand()%SO_SIZE+1;
+        sh_mem.merci[i].vita=rand()%(S0_MAX_VITA-SO_MIN_VITA+1)+SO_MIN_VITA;
         sh_mem.merci[i].num=0;
     }
     UNLOCK
@@ -223,12 +251,13 @@ int main(int args,char* argv[]){
     sigaction(SIGALRM, &sa, NULL);
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
-    
-    for(i=0;i<=SO_GIORNI;i++){
+    semctl(sem_id, 2, SETVAL, 0);
+    for(i=0;i<SO_GIORNI-1;i++){
         
         alarm(1);
         sleep(1);    
     }
+    sleep(1);
     raise(SIGINT);
     
     return 0;

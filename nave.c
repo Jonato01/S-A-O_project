@@ -170,8 +170,10 @@ int getpart()
     LOCK
     for(i = 0; i < SO_PORTI; i++){
         for(j = 0; j < MERCI_RIC_OFF_TOT; j++){
+            
             y = containsOff(ord[i], merci_ric[j].id);
-
+            if(!sh_mem_2.porti[ord[i]].off[y].size)
+            break;
             if((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
                 flag = true;
                 q = merci_ric[j].pre;
@@ -211,7 +213,9 @@ int getdest()
     if(barchetta.carico_pre < SO_CAPACITY){
         
         for(i = 0; i < SO_PORTI; i++){
-            for(j = 0; j < MERCI_RIC_OFF; j++){
+            for(j = 0; j < MERCI_RIC_OFF_TOT; j++){
+                if(!sh_mem_2.porti[ord[i]].ric[j].size)
+                    break;
                 if(!sh_mem_2.porti[ord[i]].ric[j].pre && sh_mem_2.porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
                     flag = true;
                     merci_ric[j]=sh_mem_2.porti[ord[i]].ric[j];
@@ -392,7 +396,7 @@ int main (int argc, char * argv[]){
     sigaction(SIGUSR2, &sa, NULL);
     sa.sa_handler=handle_swell;
     sigaction(SIGWINCH, &sa, NULL);
-
+    while(1){
     while((barchetta.idp_dest = getdest()) != -1){
 
         ordinaporti(sh_mem.porti[barchetta.idp_dest].coord);
@@ -519,8 +523,7 @@ int main (int argc, char * argv[]){
             }
         }
     }
+    pause();
+    }
 
-    while(1);
-
-    exit(0);
 }

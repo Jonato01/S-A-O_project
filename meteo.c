@@ -26,7 +26,7 @@ struct my_msg_t msgM;
 struct timespec rem;
 int mem_id;
 int msgN_id;
-int msgP_id;
+int msgP_id; int msg_id;
 int msgM_id;
 char * hlp; 
 bool flag;
@@ -37,29 +37,9 @@ void handle_morte(int signal){
     exit(0);
 }
 
-static void msg_print_stats(int fd, int q_id) {
-	struct msqid_ds my_q_data;
-    msgctl(q_id, IPC_STAT, &my_q_data);
-	dprintf(fd, "METEO:\n--- IPC Message Queue ID: %8d, START ---\n", q_id);
-	dprintf(fd, "---------------------- Time of last msgsnd: %ld\n",
-		my_q_data.msg_stime);
-	dprintf(fd, "---------------------- Time of last msgrcv: %ld\n",
-		my_q_data.msg_rtime);
-	dprintf(fd, "---------------------- Time of last change: %ld\n",
-		my_q_data.msg_ctime);
-	dprintf(fd, "---------- Number of messages in the queue: %ld\n",
-		my_q_data.msg_qnum);
-	dprintf(fd, "- Max number of bytes allowed in the queue: %ld\n",
-		my_q_data.msg_qbytes);
-	dprintf(fd, "----------------------- PID of last msgsnd: %d\n",
-		my_q_data.msg_lspid);
-	dprintf(fd, "----------------------- PID of last msgrcv: %d\n",
-		my_q_data.msg_lrpid);  
-	dprintf(fd, "--- IPC Message Queue ID: %8d, END -----\n", q_id);
-}
+
 
 void tempesta(){
-    msg_print_stats(1, msgN_id);
     if(msgrcv(msgN_id, &msgN, sizeof(msgN), 0, IPC_NOWAIT) == -1){
         if(errno == ENOMSG){
             printf("Nessuna nave in viaggio, tempesta evitata\n");
@@ -75,7 +55,7 @@ void tempesta(){
 void mareggiata(){
     int porto; int c = 0;
     srand(getpid());
-    msg_print_stats(1, msgP_id);
+    
     porto = rand() % (SO_PORTI + 1) + 1;
     printf("Mareggiata in porto %d!\n", porto-1);
     while(1){
@@ -108,6 +88,7 @@ void handle_mael(int signal){
     if(errno == 0){
         printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id, (int)msgM.pid);
         kill(msgM.pid, SIGINT);
+    msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
     } else if(errno == ENOMSG){
         printf("Non ci sono più navi!\n");
         flag = false;
@@ -135,6 +116,9 @@ int main(){
     printf("Meteo: msgP_id: %d\n", msgP_id);
     msgM_id = msgget(getppid() +5, 0600);
     printf("Meteo: msgP_id: %d\n", msgM_id);
+    msg_id = msgget(getppid() +6, 0600);
+    printf("Meteo: msgP_id: %d\n", msgM_id);
+    
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
