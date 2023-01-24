@@ -44,12 +44,14 @@ void handle_time(int signal)
     LOCK
     for(i=0;i<MERCI_RIC_OFF_TOT && sh_mem_2.porti[porto_id].off[i].size;i++)
     {
+        if(!sh_mem_2.porti[porto_id].off[i].vita && !sh_mem_2.porti[porto_id].off[i].num){
         sh_mem_2.porti[porto_id].off[i].vita--;
         if(sh_mem_2.porti[porto_id].off[i].vita==0)
         {
             bzero(&sh_mem_2.porti[porto_id].off[i],sizeof(struct merce));
+            sh_mem_2.porti[porto_id].off[i].size=-1;
             /*Far scadere bene le merci*/
-        }
+        }}
     }
     genmerci();
     genric();
@@ -132,7 +134,7 @@ void genmerci()
             ric=true;
             for(j=0; j<(MERCI_RIC_OFF*giorno) && ric && sh_mem_2.porti[porto_id].ric[j].size ;j++)
             {
-                if(r==sh_mem_2.porti[porto_id].ric[j].id)
+                if(r==sh_mem_2.porti[porto_id].ric[j].id && sh_mem_2.porti[porto_id].ric[j].num)
                     ric=false;
             }
             if(x==i && ric){

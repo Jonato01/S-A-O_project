@@ -141,8 +141,8 @@ void ordinaporti(struct coordinates coord){
 int containsOff(int portoid, int merceid){
     int i;
 
-    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].off[i].size==0; i++){
-        if(sh_mem_2.porti[portoid].off[i].id == merceid){
+    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].off[i].size!=0; i++){
+        if(sh_mem_2.porti[portoid].off[i].id == merceid && !sh_mem_2.porti[portoid].off[i].num){
             return i;
         }
     }
@@ -151,8 +151,8 @@ int containsOff(int portoid, int merceid){
 
 int containsRic(int portoid, int merceid){
     int i;
-    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].ric[i].size==0; i++){
-        if(sh_mem_2.porti[portoid].ric[i].id == merceid){
+    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].ric[i].size!=0; i++){
+        if(sh_mem_2.porti[portoid].ric[i].id == merceid && sh_mem_2.porti[portoid].ric[i].num){
             return i;
         }
     }
@@ -169,8 +169,9 @@ int getpart()
     bool flag = false;
     LOCK
     for(i = 0; i < SO_PORTI; i++){
-        for(j = 0; j < MERCI_RIC_OFF; j++){
+        for(j = 0; j < MERCI_RIC_OFF_TOT; j++){
             y = containsOff(ord[i], merci_ric[j].id);
+
             if((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
                 flag = true;
                 q = merci_ric[j].pre;
@@ -263,19 +264,26 @@ void carico(){
     double work_time;
     int t = 0;
     double q; double nano;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
-        if(merci_ric[i].id != -1){
+    for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
+        if(merci_ric[i].id != 0){
             y = containsOff(barchetta.idp_part, merci_ric[i].id);
             if(y != -1){
                 merci_ric[i].status = 1;
                 LOCK
                 sh_mem_2.porti[barchetta.idp_part].off[y].status = 1;
+                UNLOCK
                 t = merci_ric[i].pre;       
                 while(t > 0){
                     barchetta.carico += merci_ric[i].size;
                     merci_ric[i].num++;
                     t--;
                 }
+                
+                LOCK
+                for(y=0;y<MERCI_RIC_OFF_TOT && sh_mem_2.porti[barchetta.idp_part].off[y].size!=0;y++)
+                if(sh_mem_2.porti[barchetta.idp_part].off[y].id==merci_ric[i].id)
+                break;
+                sh_mem_2.porti[barchetta.idp_part].off[y].num-=merci_ric[i].num;
                 UNLOCK
                 printf("Nave %d: caricati %d lotti di merce %d dal porto %d\n", barchetta.idn, merci_ric[i].num, merci_ric[i].id, barchetta.idp_part);
             }
@@ -315,6 +323,12 @@ void scarico(){
                     t++;
                 }
                 merci_ric[i].size = 0;
+                LOCK
+                for(y=0;y<MERCI_RIC_OFF_TOT && sh_mem_2.porti[barchetta.idp_dest].ric[y].size!=0;y++)
+                if(sh_mem_2.porti[barchetta.idp_dest].ric[y].id==merci_ric[i].id)
+                break;
+                sh_mem_2.porti[barchetta.idp_dest].ric[y].num-=t;
+                UNLOCK
                 printf("Nave %d: consegnati %d lotti di merce %d al porto %d\n", barchetta.idn, t, merci_ric[i].id, barchetta.idp_dest);
                 merci_ric[i].id = -1;
             }
