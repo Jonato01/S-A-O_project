@@ -25,7 +25,7 @@ struct my_msg_t msgP;
 int sem_id; int msgN_id; int msgP_id;
 struct merce *merci_ric;
 char* hlp;
-int nmerci;
+int nmerci; int giorno;
 int bancid;
 struct nave barchetta;
 struct timespec rem;
@@ -64,6 +64,7 @@ void handle_time(int signal)
             printf("Oh no! Anyway...\n");
             nanosleep(&rem, &rem);
         }
+        giorno++;
     }
 }
 
@@ -310,7 +311,7 @@ void scarico(){
     int t;
     double work_time;
     double q = 0; double nano=0;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
         if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
             y = containsRic(barchetta.idp_dest, merci_ric[i].id);
             if(y != -1){
@@ -358,6 +359,7 @@ int main (int argc, char * argv[]){
     struct sigaction sa;
     size_t j;
     setvar();
+    giorno=0;
     j=(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF_TOT)*SO_PORTI+(sizeof(struct merce))*SO_MERCI;
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto)); 
     bzero(&sa,sizeof(sa));
@@ -543,7 +545,9 @@ int main (int argc, char * argv[]){
             }
         }
     }
-    pause();
+    i=giorno;
+    while(giorno!=(i+1))
+        pause();
     }
 
 }
