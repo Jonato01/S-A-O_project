@@ -40,7 +40,7 @@ void fine_sim(int signal)
     {
         msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
         if(errno)
-        perror("err msg maelstorm");
+        perror("err msg maelstorm\n");
         navi[msgM.id-1]=-1;
     }
     kill(meteo, SIGINT);
@@ -57,13 +57,13 @@ void fine_sim(int signal)
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
 
-    printf("Deleting msgN with id %d", msgN_id);
+    printf("Deleting msgN with id %d\n", msgN_id);
     msgctl(msgN_id, 0, IPC_RMID);
-     printf("Deleting msgN with id %d", msg_id);
+     printf("Deleting msgN with id %d\n", msg_id);
     msgctl(msg_id, 0, IPC_RMID);
-    printf("Deleting msgP with id %d", msgP_id);
+    printf("Deleting msgP with id %d\n", msgP_id);
     msgctl(msgP_id, 0, IPC_RMID);
-    printf("Deleting msgM with id %d", msgP_id);
+    printf("Deleting msgM with id %d\n", msgP_id);
     msgctl(msgM_id, 0, IPC_RMID);
     exit(0);
 }
@@ -145,7 +145,10 @@ void gennavi()
         }
         msgM.id = j;
         msgM.pid = navi[j];
-        msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
+        do{msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
+        }while(errno==EINTR);
+        if(errno)
+        perror("err ");
     } 
 }
 

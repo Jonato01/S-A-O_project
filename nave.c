@@ -409,11 +409,17 @@ int main (int argc, char * argv[]){
                 UNLOCK
                 msgN.id = barchetta.idn+1;
                 msgN.pid = getpid();
-                if(msgsnd(msgN_id, &msgN, sizeof(msgN), 0) == -1){
-                    perror("Errore nave 1\n");
-                } else {
+                
+                
+                   do{
+                    msgsnd(msgN_id, &msgN, sizeof(msgN), 0);
+                   
+                    }while(errno==EINTR);
+                if(errno)
+                 perror("Errore nave 1\n");
+                else {
                     printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msgN_id, msgN.id);
-                }
+                    }
 
                 route_time = distance / SO_SPEED;
                 nano=modf(route_time,&route_time);
@@ -423,9 +429,11 @@ int main (int argc, char * argv[]){
                 nanosleep(&rem, &rem);
                 travelling = false;
 
-                if(msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0) == -1){
+                do{msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0);
+                }while(errno==EINTR);
+                if(errno)
                     perror("Errore nave 2\n");
-                } else {
+                 else {
                     printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
                 }
 
@@ -439,15 +447,19 @@ int main (int argc, char * argv[]){
 
                 msgP.id = barchetta.idp_part+1;
                 msgP.pid = getpid();
-                if(msgsnd(msgP_id, &msgP, sizeof(msgP), 0) == -1){
+                do{msgsnd(msgP_id, &msgP, sizeof(msgP), 0);
+                    }while(errno==EINTR);
+                    if(errno)
                     perror("Errore sndmsg carico");
-                } else {
+                 else {
                     printf("Nave %d: aggiunto porto %d alla coda carico\n", barchetta.idn, barchetta.idp_part);
                 }
                 carico();
-                if(msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_part+1, 0) == -1){
+                do{msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_part+1, 0);
+                }while(errno==EINTR);
+                if(errno)
                     perror("Errore rcvmsg carico\n");
-                } else {
+                 else {
                     printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
                 }
 
@@ -459,9 +471,12 @@ int main (int argc, char * argv[]){
                 UNLOCK
                 msgN.id = barchetta.idp_dest+1;
                 msgN.pid = getpid();
-                if(msgsnd(msgN_id, &msgN, sizeof(msgN), 0) == -1){
+               
+                do{msgsnd(msgN_id, &msgN, sizeof(msgN), 0);
+                }while(errno==EINTR);
+                if(errno)
                     perror("Errore nave 3\n");
-                } else {
+                 else {
                     printf("Nave %d: inserita in coda %d con codice %ld\n", barchetta.idn, msgN_id, msgN.id);
                 }
 
@@ -473,11 +488,12 @@ int main (int argc, char * argv[]){
                 nanosleep(&rem, &rem);
                 travelling = false;
                  
-                if(msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0) == -1){
+                do{msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0);
+                }while(errno==EINTR);
+                if(errno)
                     perror("Errore nave 4\n");
-                } else {
+                else 
                     printf("Nave %d: rimossa dalla coda\n", barchetta.idn);
-                }
                 
                 LOCK
                 barchetta.coord = sh_mem.porti[barchetta.idp_dest].coord;
@@ -489,15 +505,19 @@ int main (int argc, char * argv[]){
 
                 msgP.id = barchetta.idp_dest +1;
                 msgP.pid = getpid();
-                if(msgsnd(msgP_id, &msgP, sizeof(msgP), 0) == -1){
+                do{msgsnd(msgP_id, &msgP, sizeof(msgP), 0); 
+                }while(errno==EINTR);
+                if(errno)
                     perror("Errore sndmsg scarico");
-                } else {
+                 else {
                     printf("Nave %d: aggiunto porto %d alla coda\n", barchetta.idn, barchetta.idp_part);
                 }
                 scarico();
-                if(msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_dest+1, 0) == -1){
+                do{msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_dest+1, 0);
+                }while(errno==EINTR);
+                if(errno)
                     perror("Errore rcvmsg scarico\n");
-                } else {
+                 else {
                     printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_dest);
                 }
 

@@ -40,16 +40,20 @@ void handle_morte(int signal){
 
 
 void tempesta(){
-    if(msgrcv(msgN_id, &msgN, sizeof(msgN), 0, IPC_NOWAIT) == -1){
+    do{
+        if(msgrcv(msgN_id, &msgN, sizeof(msgN), 0, IPC_NOWAIT) == -1){
         if(errno == ENOMSG){
             printf("Nessuna nave in viaggio, tempesta evitata\n");
-        } else {
+        } else if(errno!=EINTR) 
+         {
             perror("Errore in tempesta");
         }
     } else {
         printf("Scatenata tempesta su nave %d!\n", (int) msgN.id-1);
         kill(msgN.pid, SIGUSR2);
     }
+    }while(errno==EINTR);
+    
 }
 
 void mareggiata(){
@@ -60,7 +64,7 @@ void mareggiata(){
     printf("Mareggiata in porto %d!\n", porto-1);
     while(1){
         if(msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1){
-            if(errno != ENOMSG){
+            if(errno != ENOMSG || errno!=EINTR){
                 perror("Errore in mareggiata!");
             }
             break;
@@ -84,11 +88,17 @@ void handle_time(int signal){
 void handle_mael(int signal){
     printf("METEO: inizia vortice\n");
     srand(getpid());
-    msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
+    do{msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
+    }while(errno==EINTR);
+    if(errno)
+    perror("err msgrcv");
     if(errno == 0){
         printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id, (int)msgM.pid);
         kill(msgM.pid, SIGINT);
-    msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
+    do{msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
+    }while(errno==EINTR);
+    if(errno)
+    perror("err msgsnd");
     } else if(errno == ENOMSG){
         printf("Non ci sono più navi!\n");
         flag = false;
