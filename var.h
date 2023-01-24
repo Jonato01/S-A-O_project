@@ -184,7 +184,7 @@ void setvar(){
             else{
                 merci_ric_off=atoi(tr);
                 if((so_merci/2)<merci_ric_off)
-                {printf("var merci_ric_off troppo piccola verrà assegnata di default")
+                {printf("var merci_ric_off troppo piccola verrà assegnata di default");
                  merci_ric_off=so_merci/2;
             }}
         } else if((tr=strstr(line,"so_fill"))!=NULL){
