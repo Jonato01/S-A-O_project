@@ -531,7 +531,7 @@ int main (int argc, char * argv[]){
                     printf("Nave %d: merci prenotate esaurite\n",barchetta.idn);
                 else{
                     printf("Ancora prenotate: ");
-                    for(i = 0; i < MERCI_RIC_OFF; i++){
+                    for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
                         if(merci_ric[i].id!=-1)
                         printf("%d ton di %d + ", merci_ric[i].size * merci_ric[i].num, merci_ric[i].id);
                     }
