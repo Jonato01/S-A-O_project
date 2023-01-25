@@ -43,7 +43,7 @@ void fine_sim(int signal)
         perror("err msg maelstorm\n");
         navi[msgM.id-1]=-1;
     }
-    kill(meteo, SIGINT);
+    /*kill(meteo, SIGINT);*/
 
     for(n=0; n<SO_PORTI || n<SO_NAVI;n++){
         if(n<SO_NAVI && navi[n]!=-1)
@@ -81,7 +81,7 @@ void alarm_giorni(int signal)
         perror("err msg maelstorm");
         navi[msgM.id-1]=-1;
     }
-    kill(meteo, SIGUSR1);
+    /*kill(meteo, SIGUSR1);*/
     for(n=0;n<SO_PORTI;n++)
     {   
         kill(porti[n],SIGUSR1);
@@ -246,7 +246,7 @@ int main(int args,char* argv[]){
     UNLOCK
     genporti();     
     gennavi();
-    genmeteo();
+    /*genmeteo();*/
     sops.sem_num = 2;            
     sops.sem_op = SO_NAVI+1;            
     semop(sem_id,&sops, 1);
@@ -257,8 +257,9 @@ int main(int args,char* argv[]){
     semctl(sem_id, 2, SETVAL, 0);
     for(i=0;i<SO_GIORNI-1;i++){
         
-        alarm(1);
-        sleep(1);    
+       
+        sleep(1);
+        raise(SIGALRM);    
     }
     sleep(1);
     raise(SIGINT);
