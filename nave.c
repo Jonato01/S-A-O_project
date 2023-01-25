@@ -361,8 +361,9 @@ int main (int argc, char * argv[]){
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
     ord=calloc(SO_PORTI,sizeof(int));
-    /*sigaction(SIGINT, &sa, NULL);*/
     sigaction(SIGUSR1, &sa, NULL);
+    sa.sa_handler=handle_morte;
+    sigaction(SIGINT, &sa, NULL);
     merci_ric=calloc(MERCI_RIC_OFF_TOT,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
@@ -386,8 +387,6 @@ int main (int argc, char * argv[]){
     }
     gennave();
 
-    sa.sa_handler=handle_morte;
-    sigaction(SIGINT, &sa, NULL);
     sa.sa_handler=handle_time;
     sigaction(SIGUSR1, &sa, NULL);
     sa.sa_handler=handle_storm;

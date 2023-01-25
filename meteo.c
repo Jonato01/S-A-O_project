@@ -93,7 +93,7 @@ void handle_mael(int signal){
     if(errno)
     perror("err msgrcv");
     if(errno == 0){
-        printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id, (int)msgM.pid);
+        printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id-1, (int)msgM.pid);
         kill(msgM.pid, SIGINT);
     do{msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
     }while(errno==EINTR);
