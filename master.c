@@ -36,7 +36,7 @@ void fine_sim(int signal)
     struct my_msg_t msgM;
     struct msqid_ds my_q_data;
     msgctl(msg_id, IPC_STAT, &my_q_data);
-    if(my_q_data.msg_qnum)
+    while(my_q_data.msg_qnum>0)
     {
         msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
         if(errno)
@@ -74,7 +74,7 @@ void alarm_giorni(int signal)
     struct my_msg_t msgM;
     struct msqid_ds my_q_data;
     msgctl(msg_id, IPC_STAT, &my_q_data);
-    if(my_q_data.msg_qnum)
+    while(my_q_data.msg_qnum>0)
     {
         msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
         if(errno)
