@@ -113,7 +113,9 @@ void gennavi()
             perror("Execve navi er");
 	    	exit(1);
         }
+        LOCK
         navi[i]=h;
+        UNLOCK
         sops.sem_num=1;
         sops.sem_op=-1;
         semop(sem_id,&sops,1);

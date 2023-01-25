@@ -102,7 +102,6 @@ int main(){
     
     mem_mael=shmget(getppid()+9,j,0600);
     navi=shmat(mem_mael,NULL,0600);
-    printf("ciaooo %d\n\n\n\n\n\n\n", navi[0]);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
@@ -128,9 +127,11 @@ int main(){
             rem.tv_nsec = fractpart*1e9;
             nanosleep(&rem, &rem);
             printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            LOCK
             do{
             i=rand()%SO_NAVI;
             }while(navi[i]==-1);   
+            UNLOCK
             printf("Nave  colpita dal vortice!! pid = %d\n\n",navi[i]);
             LOCK
             kill(navi[i], SIGINT);
