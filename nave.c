@@ -493,8 +493,6 @@ int main (int argc, char * argv[]){
                 
                 }while(errno==EINTR);
                 TEST_ERROR
-                
-                 
                 do{msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0);
                 }while(errno==EINTR);
                 if(errno)
@@ -505,7 +503,6 @@ int main (int argc, char * argv[]){
                 LOCK
                 barchetta.coord = sh_mem.porti[barchetta.idp_dest].coord;
                 UNLOCK
-
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_dest, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
                 LOCK_BAN (barchetta.idp_dest);
                 printf("Nave %d: inizio a consegnare al porto %d...\n", barchetta.idn, barchetta.idp_dest);
