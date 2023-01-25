@@ -132,7 +132,6 @@ int main(){
             i=rand()%SO_NAVI;
             }while(navi[i]==-1);   
             printf("Nave  colpita dal vortice!! pid = %d\n\n",navi[i]);
-             printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
             LOCK
             kill(navi[i], SIGINT);
             navi[i]=-1;
