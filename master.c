@@ -81,7 +81,7 @@ void alarm_giorni(int signal)
         perror("err msg maelstorm");
         navi[msgM.id-1]=-1;
     }
-    kill(meteo, SIGUSR1);
+    kill(meteo, SIGUSR1); 
     for(n=0;n<SO_PORTI;n++)
     {   
         kill(porti[n],SIGUSR1);

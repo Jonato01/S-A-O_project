@@ -176,7 +176,7 @@ int main(int argc, char * argv[]){
     
     bzero(&sa,sizeof(sa));
     sa.sa_handler=SIG_IGN;
-    /*sigaction(SIGINT, &sa, NULL);*/
+    sigaction(SIGINT, &sa, NULL);
     sigaction(SIGUSR1, &sa, NULL);
     porto_id = atoi(argv[1]);
     bancid = semget(getppid()+2,SO_PORTI,0600);
@@ -240,6 +240,8 @@ int main(int argc, char * argv[]){
     semop(sem_id,&sops,1);
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);    
-    while(1)
-    sleep(SO_GIORNI);
+    while(1){
+    pause();
+    TEST_ERROR
+    }
     }

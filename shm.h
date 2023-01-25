@@ -4,6 +4,13 @@
 #include <stdbool.h>
 #include "var.h"
 #define NUM_SEMS 5
+#define TEST_ERROR    if (errno!=EINTR && errno) {fprintf(stderr, \
+					   "%s:%d: PID=%5d: Error %d (%s)\n",\
+					   __FILE__,\
+					   __LINE__,\
+					   getpid(),\
+					   errno,\
+					   strerror(errno));}
 
 
 /*blocca la banchina all'attracco*/

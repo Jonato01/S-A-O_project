@@ -63,6 +63,7 @@ void handle_time(int signal)
         if(travelling || working || waiting_storm || waiting_swell){
             printf("Oh no! Anyway...\n");
             nanosleep(&rem, &rem);
+            TEST_ERROR
         }
         giorno++;
     }
@@ -74,6 +75,7 @@ void handle_storm(int signal){
     if(travelling){
         printf("Nave %d: Tempesta mentre viaggiavo\n", barchetta.idn);
         nanosleep(&rem, &rem);
+        TEST_ERROR
         travelling = false;
     }
 
@@ -85,6 +87,7 @@ void handle_storm(int signal){
     waiting_storm = true;
     printf("Nave %d, in tempesta per %d secondi\n", barchetta.idn, SO_STORM_DURATION);
     nanosleep(&rem, &rem);
+    TEST_ERROR
     waiting_storm = false;
 
     printf("Nave %d: tempesta passata\n\n", barchetta.idn);
@@ -96,6 +99,7 @@ void handle_swell(int signal){
     if(working){
         printf("Nave %d: Mareggiata mentre caricavo/scaricavo\n", barchetta.idn);
         nanosleep(&rem, &rem);
+        TEST_ERROR
         working = false;
     }
 
@@ -107,6 +111,7 @@ void handle_swell(int signal){
     waiting_swell = true;
     printf("Nave %d, porto in mareggiata per %d\n", barchetta.idn, SO_SWELL_DURATION);
     nanosleep(&rem, &rem);
+    TEST_ERROR
     waiting_swell = false;
 
     printf("Nave %d: mareggiata passata\n\n", barchetta.idn);
@@ -142,8 +147,8 @@ void ordinaporti(struct coordinates coord){
 int containsOff(int portoid, int merceid){
     int i;
 
-    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].off[i].size!=0; i++){
-        if(sh_mem_2.porti[portoid].off[i].id == merceid && !sh_mem_2.porti[portoid].off[i].num){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
+        if(sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num){
             return i;
         }
     }
@@ -152,7 +157,7 @@ int containsOff(int portoid, int merceid){
 
 int containsRic(int portoid, int merceid){
     int i;
-    for(i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[portoid].ric[i].size!=0; i++){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
         if(sh_mem_2.porti[portoid].ric[i].id == merceid && sh_mem_2.porti[portoid].ric[i].num){
             return i;
         }
@@ -170,11 +175,9 @@ int getpart()
     bool flag = false;
     LOCK
     for(i = 0; i < SO_PORTI; i++){
-        for(j = 0; j < MERCI_RIC_OFF_TOT; j++){
+        for(j = 0; j < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); j++){
             
             y = containsOff(ord[i], merci_ric[j].id);
-            if(!sh_mem_2.porti[ord[i]].off[y].size)
-            break;
             if((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
                 flag = true;
                 q = merci_ric[j].pre;
@@ -214,9 +217,8 @@ int getdest()
     if(barchetta.carico_pre < SO_CAPACITY){
         
         for(i = 0; i < SO_PORTI; i++){
-            for(j = 0; j < MERCI_RIC_OFF_TOT; j++){
-                if(!sh_mem_2.porti[ord[i]].ric[j].size)
-                    break;
+            for(j = 0; j < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); j++){
+                
                 if(!sh_mem_2.porti[ord[i]].ric[j].pre && sh_mem_2.porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
                     flag = true;
                     merci_ric[j]=sh_mem_2.porti[ord[i]].ric[j];
@@ -269,7 +271,7 @@ void carico(){
     double work_time;
     int t = 0;
     double q; double nano;
-    for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
         if(merci_ric[i].id != -1){
             y = containsOff(barchetta.idp_part, merci_ric[i].id);
             if(y != -1){
@@ -285,7 +287,7 @@ void carico(){
                 }
                 
                 LOCK
-                for(y=0;y<MERCI_RIC_OFF_TOT && sh_mem_2.porti[barchetta.idp_part].off[y].size!=0;y++)
+                for(y=0;y<(MERCI_RIC_OFF*giorno+MERCI_RIC_OFF);y++)
                 if(sh_mem_2.porti[barchetta.idp_part].off[y].id==merci_ric[i].id)
                 break;
                 sh_mem_2.porti[barchetta.idp_part].off[y].num-=merci_ric[i].num;
@@ -311,7 +313,7 @@ void scarico(){
     int t;
     double work_time;
     double q = 0; double nano=0;
-    for(i = 0; i < MERCI_RIC_OFF_TOT; i++){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
         if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
             y = containsRic(barchetta.idp_dest, merci_ric[i].id);
             if(y != -1){
@@ -486,8 +488,9 @@ int main (int argc, char * argv[]){
                 nano=modf(route_time,&route_time);
                 rem.tv_sec = route_time;
                 rem.tv_nsec = nano*1e9;
-                travelling = true,
+                travelling = true;
                 nanosleep(&rem, &rem);
+                TEST_ERROR
                 travelling = false;
                  
                 do{msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, 0);
