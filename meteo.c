@@ -83,18 +83,14 @@ void handle_time(int signal){
 void handle_mael(int signal){
     printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n");
     srand(getpid());
-    do{
-        msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
-    }while(errno==EINTR);
-    if(errno)
-        perror("err msgrcv");
-    if(errno == 0){
+    msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
+    printf("MAEL: %ld\n", msgM.id);
+    if(errno == 0 || errno == EINTR){
         printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id-1, (int)msgM.pid);
         kill(msgM.pid, SIGINT);
-        do{msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
-    }while(errno==EINTR);
-    if(errno)
-        perror("err msgsnd");
+        msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
+        if(errno)
+            perror("MAEL: err msgsnd");
     } else if(errno == ENOMSG){
         printf("Non ci sono più navi!\n");
         flag = false;
@@ -121,9 +117,9 @@ int main(){
     msgP_id = msgget(getppid() +4, 0600);
     printf("Meteo: msgP_id: %d\n", msgP_id);
     msgM_id = msgget(getppid() +5, 0600);
-    printf("Meteo: msgP_id: %d\n", msgM_id);
+    printf("Meteo: msgM_id: %d\n", msgM_id);
     msg_id = msgget(getppid() +6, 0600);
-    printf("Meteo: msgP_id: %d\n", msgM_id);
+    printf("Meteo: msg_id: %d\n", msg_id);
     
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));

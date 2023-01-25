@@ -42,6 +42,7 @@ void fine_sim(int signal)
         if(errno)
         perror("err msg maelstorm\n");
         navi[msgM.id-1]=-1;
+        msgctl(msg_id, IPC_STAT, &my_q_data);
     }
     kill(meteo, SIGINT);
 
@@ -78,8 +79,9 @@ void alarm_giorni(int signal)
     {
         msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
         if(errno)
-        perror("err msg maelstorm");
+        perror("err msg maelstorm 0");
         navi[msgM.id-1]=-1;
+        msgctl(msg_id, IPC_STAT, &my_q_data);
     }
     kill(meteo, SIGUSR1);
     for(n=0;n<SO_PORTI;n++)
@@ -101,10 +103,12 @@ void resetSems(int sem_id){
 
 void shuffle(pid_t *arr, int len) {
     int i;
+    pid_t j;
+    pid_t temp;
     srand(time(0));
     for (i = len - 1; i > 0; i--) {
-        pid_t j = rand() % (i + 1);
-        pid_t temp = arr[i];
+        j = rand() % (i + 1);
+        temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
     }
@@ -144,6 +148,7 @@ void gennavi()
         msgM.pid = navi[i];
         do{
             msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
+            printf("msgM: %ld\n", msgM.id);
         }while(errno==EINTR);
         if(errno)
             perror("err ");
@@ -152,7 +157,6 @@ void gennavi()
 
 void genporti()
 {
-    
     int i;
     char *c;
     char * argsporti[]={PORTI_PATH_NAME,NULL,NULL};
@@ -171,7 +175,6 @@ void genporti()
         sops.sem_num=1;
         sops.sem_op=-1;
         semop(sem_id,&sops,1);
-        
     }
 }
 
