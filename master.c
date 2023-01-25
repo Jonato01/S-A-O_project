@@ -139,12 +139,12 @@ void gennavi()
 
     for(i = 0; i < SO_NAVI; i++){
         for(j = 0; j < SO_NAVI; j++){
-            if(ord[i] == navi[j]){
+            if(ord[j] == navi[i]){
                 break;
             }
         }
-        msgM.id = j;
-        msgM.pid = navi[j];
+        msgM.id = j+1;
+        msgM.pid = navi[i];
         do{msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
         }while(errno==EINTR);
         if(errno)
