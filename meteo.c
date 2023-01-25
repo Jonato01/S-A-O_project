@@ -37,34 +37,29 @@ void handle_morte(int signal){
     exit(0);
 }
 
-
-
 void tempesta(){
     do{
         if(msgrcv(msgN_id, &msgN, sizeof(msgN), 0, IPC_NOWAIT) == -1){
-        if(errno == ENOMSG){
-            printf("Nessuna nave in viaggio, tempesta evitata\n");
-        } else if(errno!=EINTR) 
-         {
-            perror("Errore in tempesta");
+            if(errno == ENOMSG){
+                printf("Nessuna nave in viaggio, tempesta evitata\n");
+            } else if(errno!=EINTR) {
+                perror("Errore in tempesta");
+            }
+        } else {
+            printf("Scatenata tempesta su nave %d!\n", (int) msgN.id-1);
+            kill(msgN.pid, SIGUSR2);
         }
-    } else {
-        printf("Scatenata tempesta su nave %d!\n", (int) msgN.id-1);
-        kill(msgN.pid, SIGUSR2);
-    }
-    }while(errno==EINTR);
-    
+    }while(errno==EINTR); 
 }
 
 void mareggiata(){
     int porto; int c = 0;
     srand(getpid());
-    
     porto = rand() % (SO_PORTI + 1) + 1;
     printf("Mareggiata in porto %d!\n", porto-1);
     while(1){
         if(msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1){
-            if(errno != ENOMSG || errno!=EINTR){
+            if(errno != ENOMSG && errno!=EINTR){
                 perror("Errore in mareggiata!");
             }
             break;
@@ -86,19 +81,20 @@ void handle_time(int signal){
 }
 
 void handle_mael(int signal){
-    printf("METEO: inizia vortice\n");
+    printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n");
     srand(getpid());
-    do{msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
+    do{
+        msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
     }while(errno==EINTR);
     if(errno)
-    perror("err msgrcv");
+        perror("err msgrcv");
     if(errno == 0){
         printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id-1, (int)msgM.pid);
         kill(msgM.pid, SIGINT);
-    do{msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
+        do{msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
     }while(errno==EINTR);
     if(errno)
-    perror("err msgsnd");
+        perror("err msgsnd");
     } else if(errno == ENOMSG){
         printf("Non ci sono più navi!\n");
         flag = false;

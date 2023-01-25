@@ -43,7 +43,7 @@ void fine_sim(int signal)
         perror("err msg maelstorm\n");
         navi[msgM.id-1]=-1;
     }
-    /*kill(meteo, SIGINT);*/
+    kill(meteo, SIGINT);
 
     for(n=0; n<SO_PORTI || n<SO_NAVI;n++){
         if(n<SO_NAVI && navi[n]!=-1)
@@ -59,11 +59,11 @@ void fine_sim(int signal)
 
     printf("Deleting msgN with id %d\n", msgN_id);
     msgctl(msgN_id, 0, IPC_RMID);
-     printf("Deleting msgN with id %d\n", msg_id);
+    printf("Deleting msg with id %d\n", msg_id);
     msgctl(msg_id, 0, IPC_RMID);
     printf("Deleting msgP with id %d\n", msgP_id);
     msgctl(msgP_id, 0, IPC_RMID);
-    printf("Deleting msgM with id %d\n", msgP_id);
+    printf("Deleting msgM with id %d\n", msgM_id);
     msgctl(msgM_id, 0, IPC_RMID);
     exit(0);
 }
@@ -81,13 +81,10 @@ void alarm_giorni(int signal)
         perror("err msg maelstorm");
         navi[msgM.id-1]=-1;
     }
-    /*kill(meteo, SIGUSR1);*/
+    kill(meteo, SIGUSR1);
     for(n=0;n<SO_PORTI;n++)
     {   
         kill(porti[n],SIGUSR1);
-        sops.sem_num=2;
-        sops.sem_op=-1;
-        semop(sem_id,&sops,1);
     }
     for(n=0;n<SO_NAVI;n++){
         if(navi[n]!=-1)
@@ -145,10 +142,11 @@ void gennavi()
         }
         msgM.id = j+1;
         msgM.pid = navi[i];
-        do{msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
+        do{
+            msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
         }while(errno==EINTR);
         if(errno)
-        perror("err ");
+            perror("err ");
     } 
 }
 
@@ -246,7 +244,7 @@ int main(int args,char* argv[]){
     UNLOCK
     genporti();     
     gennavi();
-    /*genmeteo();*/
+    genmeteo();
     sops.sem_num = 2;            
     sops.sem_op = SO_NAVI+1;            
     semop(sem_id,&sops, 1);
@@ -256,8 +254,6 @@ int main(int args,char* argv[]){
     sigaction(SIGINT, &sa, NULL);
     semctl(sem_id, 2, SETVAL, 0);
     for(i=0;i<SO_GIORNI-1;i++){
-        
-       
         sleep(1);
         raise(SIGALRM);    
     }

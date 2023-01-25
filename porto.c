@@ -46,13 +46,14 @@ void handle_time(int signal)
     for(i=0;i<MERCI_RIC_OFF_TOT && sh_mem_2.porti[porto_id].off[i].size;i++)
     {
         if(!sh_mem_2.porti[porto_id].off[i].vita && !sh_mem_2.porti[porto_id].off[i].num){
-        sh_mem_2.porti[porto_id].off[i].vita--;
-        if(sh_mem_2.porti[porto_id].off[i].vita==0)
-        {
-            bzero(&sh_mem_2.porti[porto_id].off[i],sizeof(struct merce));
-            sh_mem_2.porti[porto_id].off[i].size=-1;
-            /*Far scadere bene le merci*/
-        }}
+            sh_mem_2.porti[porto_id].off[i].vita--;
+            if(sh_mem_2.porti[porto_id].off[i].vita==0)
+            {
+                bzero(&sh_mem_2.porti[porto_id].off[i],sizeof(struct merce));
+                sh_mem_2.porti[porto_id].off[i].size=-1;
+                /*Far scadere bene le merci*/
+            }
+        }
     }
 
     genmerci();
