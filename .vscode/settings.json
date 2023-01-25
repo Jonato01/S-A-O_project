@@ -1,6 +1,7 @@
 {
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
-        "ipc.h": "c"
+        "ipc.h": "c",
+        "time.h": "c"
     }
 }

@@ -16,15 +16,13 @@
 #include <sys/wait.h>  
 #include <sys/msg.h> 
 struct sembuf sops;
-int sem_id; int mem_id; int banchine;
+int sem_id; int mem_id;int mem_mael; int banchine;
 struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
-struct my_msg_t msgM;
-int msgN_id; int msg_id;
+int msgN_id; 
 int msgP_id;
-int msgM_id;
 pid_t *porti;
 char* hlp;
 pid_t *navi;
@@ -33,25 +31,19 @@ pid_t meteo;
 void fine_sim(int signal)
 {
     int n;
-    struct my_msg_t msgM;
-    struct msqid_ds my_q_data;
-    msgctl(msg_id, IPC_STAT, &my_q_data);
-    while(my_q_data.msg_qnum>0)
-    {
-        msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
-        if(errno)
-        perror("err msg maelstorm\n");
-        navi[msgM.id-1]=-1;
-        msgctl(msg_id, IPC_STAT, &my_q_data);
-    }
+    
+    
+    
     kill(meteo, SIGINT);
-
+    LOCK
     for(n=0; n<SO_PORTI || n<SO_NAVI;n++){
         if(n<SO_NAVI && navi[n]!=-1)
             kill(navi[n],SIGINT);
         if(n<SO_PORTI)
             kill(porti[n],SIGINT);
-    }
+    }UNLOCK
+    shmdt(navi);
+    shmctl(mem_mael,0,IPC_RMID);
     shmdt(hlp);
     shmctl(mem_id,0,IPC_RMID);
     printf("Deleting sem with id %d\n",sem_id);
@@ -60,29 +52,19 @@ void fine_sim(int signal)
 
     printf("Deleting msgN with id %d\n", msgN_id);
     msgctl(msgN_id, 0, IPC_RMID);
-    printf("Deleting msg with id %d\n", msg_id);
-    msgctl(msg_id, 0, IPC_RMID);
+    
     printf("Deleting msgP with id %d\n", msgP_id);
     msgctl(msgP_id, 0, IPC_RMID);
-    printf("Deleting msgM with id %d\n", msgM_id);
-    msgctl(msgM_id, 0, IPC_RMID);
+    
     exit(0);
 }
 
 void alarm_giorni(int signal)
 {
     int n;
-    struct my_msg_t msgM;
-    struct msqid_ds my_q_data;
-    msgctl(msg_id, IPC_STAT, &my_q_data);
-    while(my_q_data.msg_qnum>0)
-    {
-        msgrcv(msg_id,&msgM,sizeof(msgM),0,IPC_NOWAIT);
-        if(errno)
-        perror("err msg maelstorm 0");
-        navi[msgM.id-1]=-1;
-        msgctl(msg_id, IPC_STAT, &my_q_data);
-    }
+    
+    
+    LOCK
     kill(meteo, SIGUSR1);
     for(n=0;n<SO_PORTI;n++)
     {   
@@ -91,7 +73,7 @@ void alarm_giorni(int signal)
     for(n=0;n<SO_NAVI;n++){
         if(navi[n]!=-1)
             kill(navi[n],SIGUSR1);
-    }
+    }UNLOCK
 }
 
 void resetSems(int sem_id){
@@ -116,43 +98,27 @@ void shuffle(pid_t *arr, int len) {
 
 void gennavi()
 {
-    int i; int j;
+    int i;
+    pid_t h; 
     char *c;
     char * argsnavi[]={NAVI_PATH_NAME,NULL,NULL};
-    int * ord = calloc(SO_PORTI, sizeof(int));
     c=calloc(1,sizeof(int));
     /*creazione navi*/
     for(i = 0; i < SO_NAVI; i++){
-        if(!(navi[i]=fork())){
+       
+        if(!(h=fork())){
             sprintf(c, "%d", i);
             argsnavi[1]=c;
             execve(NAVI_PATH_NAME,argsnavi,NULL);
             perror("Execve navi er");
 	    	exit(1);
         }
-        ord[i] = navi[i];
+        navi[i]=h;
         sops.sem_num=1;
         sops.sem_op=-1;
         semop(sem_id,&sops,1);
     }
-
-    shuffle(navi, SO_NAVI);
-
-    for(i = 0; i < SO_NAVI; i++){
-        for(j = 0; j < SO_NAVI; j++){
-            if(ord[j] == navi[i]){
-                break;
-            }
-        }
-        msgM.id = j+1;
-        msgM.pid = navi[i];
-        do{
-            msgsnd(msgM_id, &msgM, sizeof(msgM), 0);
-            printf("msgM: %ld\n", msgM.id);
-        }while(errno==EINTR);
-        if(errno)
-            perror("err ");
-    } 
+      
 }
 
 void genporti()
@@ -201,7 +167,6 @@ int main(int args,char* argv[]){
     
     sa.sa_handler=fine_sim;
     sigaction(SIGINT, &sa, NULL);
-    navi=calloc(SO_PORTI,sizeof(pid_t));
     porti=calloc(SO_PORTI,sizeof(pid_t));
     /*creazione IPC obj*/
     
@@ -214,7 +179,8 @@ int main(int args,char* argv[]){
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
     mem_id=shmget(getpid(),j,0600 | IPC_CREAT);
-   
+    mem_mael=shmget(getpid()+9,j,0600 | IPC_CREAT);
+    navi=shmat(mem_mael,NULL,0600);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem.merci=(struct merce *) (hlp);
     hlp= (char *)(hlp + sizeof(struct merce) * SO_MERCI);
@@ -230,9 +196,9 @@ int main(int args,char* argv[]){
 
     msgN_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
     msgP_id = msgget(getpid() + 4, 0600 | IPC_CREAT);
-    msgM_id = msgget(getpid() + 5, 0600 | IPC_CREAT);
-    msg_id  = msgget(getpid() + 6, 0600 | IPC_CREAT);
-    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\nCreating msgP with id:%d\n\n", 5, sem_id, msgN_id, msgP_id, msgM_id);
+    
+    
+    printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\n", 5, sem_id, msgN_id, msgP_id);
 
     /*creazione merci*/
     LOCK

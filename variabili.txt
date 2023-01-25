@@ -2,7 +2,7 @@ so_porti 10
 so_navi 10  
 so_banchine 4
 so_capacity 120
-so_giorni 10
+so_giorni 5
 so_lato 100.00
 so_loadspeed 500
 so_max_vita 30
@@ -14,4 +14,4 @@ so_speed 200
 merci_ric_off 2
 so_storm_duration 2
 so_swell_duration 3
-so_maelstrom 30
+so_maelstrom 24

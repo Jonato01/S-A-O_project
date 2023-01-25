@@ -22,18 +22,17 @@ struct shared_data  sh_mem;
 struct shared_data  sh_mem_2;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
-struct my_msg_t msgM;
-struct timespec rem;
+struct timespec rem;pid_t* navi;  int mem_mael;
 int mem_id;
 int msgN_id;
-int msgP_id; int msg_id;
-int msgM_id;
+int msgP_id; 
 char * hlp; 
 bool flag;
 
 void handle_morte(int signal){
     printf("Ammazzando il meteo...\n");
     shmdt (hlp);
+    shmdt(navi);
     exit(0);
 }
 
@@ -80,29 +79,13 @@ void handle_time(int signal){
     nanosleep(&rem, &rem);
 }
 
-void handle_mael(int signal){
-    printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n");
-    srand(getpid());
-    msgrcv(msgM_id, &msgM, sizeof(msgM), 0, IPC_NOWAIT);
-    printf("MAEL: %ld\n", msgM.id);
-    if(errno == 0 || errno == EINTR){
-        printf("Nave %d colpita dal vortice!! pid = %d\n\n", (int)msgM.id-1, (int)msgM.pid);
-        kill(msgM.pid, SIGINT);
-        msgsnd(msg_id,&msgM,sizeof(msgM),IPC_NOWAIT);
-        if(errno)
-            perror("MAEL: err msgsnd");
-    } else if(errno == ENOMSG){
-        printf("Non ci sono più navi!\n");
-        flag = false;
-    } else {
-        perror("METEO: errore in handle_mael");
-    }
-}
+
 
 int main(){
     int i; size_t j;
     double x, fractpart, intpart;
-    struct sigaction sa;
+    struct sigaction sa; int navi_vita;
+    
     flag = true;
     setvar();
     bzero(&sa,sizeof(sa));
@@ -116,11 +99,10 @@ int main(){
     printf("Meteo: msgN_id: %d\n", msgN_id);
     msgP_id = msgget(getppid() +4, 0600);
     printf("Meteo: msgP_id: %d\n", msgP_id);
-    msgM_id = msgget(getppid() +5, 0600);
-    printf("Meteo: msgM_id: %d\n", msgM_id);
-    msg_id = msgget(getppid() +6, 0600);
-    printf("Meteo: msg_id: %d\n", msg_id);
     
+    mem_mael=shmget(getppid()+9,j,0600);
+    navi=shmat(mem_mael,NULL,0600);
+    printf("ciaooo %d\n\n\n\n\n\n\n", navi[0]);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
     sh_mem.merci=(struct merce *) (hlp);
@@ -134,20 +116,34 @@ int main(){
         sh_mem_2.porti[i].ric=(struct merce*) (hlp);
         hlp=(char*)(hlp+sizeof(struct merce)*MERCI_RIC_OFF);
     }
-
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);
-    sa.sa_handler=handle_mael;
-    sigaction(SIGALRM, &sa, NULL);
-
+    navi_vita=SO_NAVI;
+    x = (double) SO_MAELSTROM / 24;
+            fractpart=modf(x,&intpart);
     while(1){
         if(flag){
-            x = (double) SO_MAELSTROM / 24;
-            fractpart=modf(x,&intpart);
+            
             rem.tv_sec = intpart;
             rem.tv_nsec = fractpart*1e9;
             nanosleep(&rem, &rem);
-            raise(SIGALRM);
-        }
+            printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            do{
+            i=rand()%SO_NAVI;
+            }while(navi[i]==-1);   
+            printf("Nave  colpita dal vortice!! pid = %d\n\n",navi[i]);
+             printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            LOCK
+            kill(navi[i], SIGINT);
+            navi[i]=-1;
+            TEST_ERROR
+            UNLOCK
+            navi_vita--;
+             if(!navi_vita){
+            printf("Non ci sono più navi!\n");
+            flag = false;
+            }
+            
+        }else pause();
     }
 }
