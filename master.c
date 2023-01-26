@@ -34,7 +34,7 @@ pid_t meteo;
 void fine_sim(int signal)
 {
     int n;
-
+    
     kill(meteo, SIGINT);
     LOCK for (n = 0; n < SO_PORTI || n < SO_NAVI; n++)
     {
@@ -44,6 +44,9 @@ void fine_sim(int signal)
             kill(porti[n], SIGINT);
     }
     UNLOCK
+    sops.sem_num = 2;
+    sops.sem_op = -SO_NAVI ;
+    semop(sem_id, &sops, 1);
     shmdt(navi);
     shmctl(mem_mael, 0, IPC_RMID);
     shmdt(hlp);
@@ -57,7 +60,7 @@ void fine_sim(int signal)
 
     printf("Deleting msgP with id %d\n", msgP_id);
     msgctl(msgP_id, 0, IPC_RMID);
-
+    
     exit(0);
 }
 
@@ -228,9 +231,7 @@ int main(int args, char *argv[])
     genporti();
     gennavi();
     genmeteo();
-    sops.sem_num = 2;
-    sops.sem_op = SO_NAVI + 1;
-    semop(sem_id, &sops, 1);
+    
     sa.sa_handler = alarm_giorni;
     sigaction(SIGALRM, &sa, NULL);
     sa.sa_handler = fine_sim;

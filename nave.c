@@ -44,11 +44,6 @@ int *ord; /* ID porti in ordine di distanza*/
 
 void handle_morte(int signal)
 {
-    LOCK
-        sops.sem_num = 2;
-    sops.sem_op = 1;
-    semop(sem_id, &sops, 1);
-    UNLOCK
     if (msgNf)
     {
         printf("La nave %d era in viaggio\n", barchetta.idn);
@@ -90,6 +85,11 @@ void handle_morte(int signal)
     }
     printf("La nave %d ha finito di vivere\n", barchetta.idn);
     shmdt(hlp);
+    LOCK
+        sops.sem_num = 2;
+    sops.sem_op = 1;
+    semop(sem_id, &sops, 1);
+    UNLOCK
     exit(0);
 }
 
