@@ -25,7 +25,7 @@ struct my_msg_t msgP;
 int sem_id; int msgN_id; int msgP_id;
 struct merce *merci_ric;
 char* hlp;
-int nmerci;
+int nmerci; int giorno;
 int bancid;
 struct nave barchetta;
 struct timespec rem;
@@ -74,7 +74,9 @@ void handle_morte(int signal){
 void handle_time(int signal)
 {
     int i;
+
     if(signal == SIGUSR1){
+    giorno++;
         for(i=0; i<SO_MERCI;i++)
         {
             if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
@@ -167,7 +169,7 @@ void ordinaporti(struct coordinates coord){
 
 int containsOff(int portoid, int merceid){
     int i;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
         if(sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num){
             return i;
         }
@@ -177,7 +179,7 @@ int containsOff(int portoid, int merceid){
 
 int containsRic(int portoid, int merceid){
     int i;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
         if(sh_mem_2.porti[portoid].ric[i].id == merceid && sh_mem_2.porti[portoid].ric[i].num){
             return i;
         }
@@ -195,7 +197,7 @@ int getpart()
     bool flag = false;
     LOCK
     for(i = 0; i < SO_PORTI; i++){
-        for(j = 0; j < MERCI_RIC_OFF; j++){
+        for(j = 0; j < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); j++){
             y = containsOff(ord[i], merci_ric[j].id);
             if((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0) && (merci_ric[j].pre)){
                 flag = true;
@@ -234,7 +236,7 @@ int getdest()
     if(barchetta.carico_pre < SO_CAPACITY){
         
         for(i = 0; i < SO_PORTI; i++){
-            for(j = 0; j < MERCI_RIC_OFF; j++){
+            for(j = 0; j < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); j++){
                 if(!sh_mem_2.porti[ord[i]].ric[j].pre && sh_mem_2.porti[ord[i]].ric[j].size + barchetta.carico_pre <= SO_CAPACITY){
                     flag = true;
                     merci_ric[j]=sh_mem_2.porti[ord[i]].ric[j];
@@ -287,7 +289,7 @@ void carico(){
     double work_time;
     int t = 0;
     double q; double nano;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < ((MERCI_RIC_OFF+MERCI_RIC_OFF*giorno)); i++){
         if(merci_ric[i].id != -1){
             y = containsOff(barchetta.idp_part, merci_ric[i].id);
             if(y != -1){
@@ -322,7 +324,7 @@ void scarico(){
     int t;
     double work_time;
     double q = 0; double nano=0;
-    for(i = 0; i < MERCI_RIC_OFF; i++){
+    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
         if(merci_ric[i].id != -1 && merci_ric[i].status == 1){
             y = containsRic(barchetta.idp_dest, merci_ric[i].id);
             if(y != -1){
@@ -372,9 +374,10 @@ int main (int argc, char * argv[]){
     sigaction(SIGUSR1, &sa, NULL);
     sa.sa_handler=handle_morte;
     sigaction(SIGINT, &sa, NULL);
-    merci_ric=calloc(MERCI_RIC_OFF,sizeof(struct merce));  
+    merci_ric=calloc(MERCI_RIC_OFF_TOT,sizeof(struct merce));  
     barchetta.idn= atoi(argv[1]);
     srand(getpid());
+    giorno=0;
     /* Ottengo l'accesso a IPC obj */
     sem_id = semget(getppid()+1, NUM_SEMS, 0600 );
     msgN_id = msgget(getppid() + 3, 0600);
@@ -405,9 +408,7 @@ int main (int argc, char * argv[]){
     do{
         if((barchetta.idp_dest = getdest()) == -1){
             printf("NAVE %d: nessun porto disponibile (scarico), aspetto nuovo giorno\n", barchetta.idn);
-            rem.tv_sec = 1;
-            rem.tv_nsec = 0;
-            nanosleep(&rem, &rem);
+            
             continue;
         }
         ordinaporti(sh_mem.porti[barchetta.idp_dest].coord);
@@ -529,15 +530,15 @@ int main (int argc, char * argv[]){
 
                 printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_dest);
-                for(i = 0; i < MERCI_RIC_OFF; i++){
+                for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
                     if(merci_ric[i].id!=-1)
                     break;
                 }
-                if(i==MERCI_RIC_OFF)
+                if(i==(MERCI_RIC_OFF+MERCI_RIC_OFF*giorno))
                     printf("Nave %d: merci prenotate esaurite\n",barchetta.idn);
                 else{
                     printf("Ancora prenotate: ");
-                    for(i = 0; i < MERCI_RIC_OFF; i++){
+                    for(i = 0; i < (MERCI_RIC_OFF+MERCI_RIC_OFF*giorno); i++){
                         if(merci_ric[i].id!=-1)
                         printf("%d ton di %d + ", merci_ric[i].size * merci_ric[i].num, merci_ric[i].id);
                     }
