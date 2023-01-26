@@ -279,7 +279,8 @@ int getdest()
     bool flag = false;
     ordinaporti(barchetta.coord);
 
-    LOCK if (barchetta.carico_pre < SO_CAPACITY)
+    LOCK 
+    if (barchetta.carico_pre < SO_CAPACITY)
     {
 
         for (i = 0; i < SO_PORTI; i++)
@@ -482,7 +483,9 @@ int main(int argc, char *argv[])
         if ((barchetta.idp_dest = getdest()) == -1)
         {
             printf("NAVE %d: nessun porto disponibile (scarico), aspetto nuovo giorno\n", barchetta.idn);
-
+            i=giorno;
+            do{pause();
+            }while(i==giorno);
             continue;
         }
         ordinaporti(sh_mem.porti[barchetta.idp_dest].coord);
