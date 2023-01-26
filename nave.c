@@ -44,6 +44,9 @@ int *ord; /* ID porti in ordine di distanza*/
 
 void handle_morte(int signal)
 {
+    free(sh_mem_2.porti);
+    free(ord);
+    free(merci_ric);
     if (msgNf)
     {
         printf("La nave %d era in viaggio\n", barchetta.idn);

@@ -34,7 +34,8 @@ pid_t meteo;
 void fine_sim(int signal)
 {
     int n;
-    
+    free(sh_mem_2.porti);
+    free(porti);        
     kill(meteo, SIGINT);
     LOCK for (n = 0; n < SO_PORTI || n < SO_NAVI; n++)
     {
@@ -121,6 +122,9 @@ void gennavi()
         {
             sprintf(c, "%d", i);
             argsnavi[1] = c;
+            free(c);
+            free(sh_mem_2.porti);
+            free(porti);   
             execve(NAVI_PATH_NAME, argsnavi, NULL);
             perror("Execve navi er");
             exit(1);
@@ -149,6 +153,8 @@ void genporti()
         {
             sprintf(c, "%d", i);
             argsporti[1] = c;
+            free(c);
+            free(sh_mem_2.porti);
             execve(PORTI_PATH_NAME, argsporti, NULL);
             perror("Execve porti er");
             exit(1);

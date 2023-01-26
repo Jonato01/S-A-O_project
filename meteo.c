@@ -36,6 +36,7 @@ bool flag;
 void handle_morte(int signal)
 {
     printf("Ammazzando il meteo...\n");
+    free(sh_mem_2.porti);
     shmdt(hlp);
     shmdt(navi);
     exit(0);
