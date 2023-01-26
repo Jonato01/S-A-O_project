@@ -46,7 +46,7 @@ void fine_sim(int signal)
     }
     UNLOCK
     sops.sem_num = 2;
-    sops.sem_op = -SO_NAVI ;
+    sops.sem_op = -(SO_NAVI+1+SO_PORTI);
     semop(sem_id, &sops, 1);
     shmdt(navi);
     shmctl(mem_mael, 0, IPC_RMID);
@@ -122,13 +122,14 @@ void gennavi()
         {
             sprintf(c, "%d", i);
             argsnavi[1] = c;
-            free(c);
+            
             free(sh_mem_2.porti);
             free(porti);   
             execve(NAVI_PATH_NAME, argsnavi, NULL);
             perror("Execve navi er");
             exit(1);
         }
+        
         LOCK
             navi[i] = h;
         UNLOCK
@@ -136,6 +137,7 @@ void gennavi()
         sops.sem_op = -1;
         semop(sem_id, &sops, 1);
     }
+    free(c);
 }
 
 void genporti()
@@ -153,7 +155,7 @@ void genporti()
         {
             sprintf(c, "%d", i);
             argsporti[1] = c;
-            free(c);
+            free(porti);
             free(sh_mem_2.porti);
             execve(PORTI_PATH_NAME, argsporti, NULL);
             perror("Execve porti er");
@@ -163,7 +165,8 @@ void genporti()
         sops.sem_num = 1;
         sops.sem_op = -1;
         semop(sem_id, &sops, 1);
-    }
+    }        free(c);
+
 }
 
 void genmeteo()

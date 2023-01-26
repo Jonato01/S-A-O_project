@@ -37,8 +37,12 @@ void handle_morte(int signal)
 {
     printf("Ammazzando il meteo...\n");
     free(sh_mem_2.porti);
+
     shmdt(hlp);
     shmdt(navi);
+    sops.sem_num = 2;
+    sops.sem_op = 1;
+    semop(sem_id, &sops, 1);
     exit(0);
 }
 
