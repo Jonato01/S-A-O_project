@@ -88,8 +88,8 @@ void handle_morte(int signal)
     }
     printf("La nave %d ha finito di vivere\n", barchetta.idn);
     shmdt(hlp);
-    sops.sem_num = 2;
-    sops.sem_op = 1;
+    sops.sem_num = 4;
+    sops.sem_op = -1;
     semop(sem_id, &sops, 1);
     exit(0);
 }
@@ -334,7 +334,9 @@ void gennave()
     sops.sem_num = 1;
     sops.sem_op = 1;
     semop(sem_id, &sops, 1);
-    
+     sops.sem_num = 2;
+    sops.sem_op = -1;
+    semop(sem_id, &sops, 1);
 }
 
 void carico()

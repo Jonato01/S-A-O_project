@@ -35,7 +35,7 @@ void fine_sim(int signal)
 {
     int n;
     free(sh_mem_2.porti);
-    free(porti);        
+            
     kill(meteo, SIGINT);
     LOCK for (n = 0; n < SO_PORTI || n < SO_NAVI; n++)
     {
@@ -44,9 +44,10 @@ void fine_sim(int signal)
         if (n < SO_PORTI)
             kill(porti[n], SIGINT);
     }
+    free(porti);
     UNLOCK
-    sops.sem_num = 2;
-    sops.sem_op = -(SO_NAVI+1+SO_PORTI);
+    sops.sem_num = 4;
+    sops.sem_op = 0;
     semop(sem_id, &sops, 1);
     shmdt(navi);
     shmctl(mem_mael, 0, IPC_RMID);
@@ -88,6 +89,9 @@ void resetSems(int sem_id)
     int i;
     for (i = 1; i < NUM_SEMS; i++)
     {
+        if(i==4)
+        semctl(sem_id,4,SETVAL,SO_NAVI+SO_PORTI+1);
+        else
         semctl(sem_id, i, SETVAL, 0);
     }
 }
@@ -240,7 +244,9 @@ int main(int args, char *argv[])
     genporti();
     gennavi();
     genmeteo();
-    
+    sops.sem_num = 2;            
+    sops.sem_op = SO_NAVI+1;            
+    semop(sem_id,&sops, 1);
     sa.sa_handler = alarm_giorni;
     sigaction(SIGALRM, &sa, NULL);
     sa.sa_handler = fine_sim;
