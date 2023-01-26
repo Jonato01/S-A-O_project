@@ -22,14 +22,17 @@ struct shared_data sh_mem;
 struct shared_data sh_mem_2;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
+struct dump dmp;
 int sem_id;
 int msgN_id;
 int msgP_id;
 struct merce *merci_ric;
 char *hlp;
+int dmp_id;
 int nmerci;
 int giorno;
 int bancid;
+void * dmpptr;
 struct nave barchetta;
 struct timespec rem;
 bool travelling;
@@ -88,6 +91,7 @@ void handle_morte(int signal)
     }
     printf("La nave %d ha finito di vivere\n", barchetta.idn);
     shmdt(hlp);
+    shmdt(dmpptr);
     sops.sem_num = 4;
     sops.sem_op = -1;
     semop(sem_id, &sops, 1);
@@ -129,6 +133,12 @@ void handle_time(int signal)
                     LOCK
                     sh_mem_2.porti[barchetta.idp_part].off[y].status = 4;
                     UNLOCK
+                    if(barchetta.carico == 0){
+                        LOCK
+                        dmp.navi_piene--;
+                        dmp.navi_vuote++;
+                        UNLOCK
+                    }
                 }
             }
         }
@@ -351,6 +361,7 @@ void carico()
     int t = 0;
     double q;
     double nano;
+    bool flag = true;
     for (i = 0; i < ((MERCI_RIC_OFF + MERCI_RIC_OFF * giorno)); i++)
     {
         if (merci_ric[i].id != -1)
@@ -367,6 +378,12 @@ void carico()
                     barchetta.carico += merci_ric[i].size;
                     merci_ric[i].num++;
                     t--;
+                    if(flag){
+                        LOCK
+                        dmp.navi_piene++;
+                        dmp.navi_vuote--;
+                        UNLOCK
+                    }
                 }
                 UNLOCK
                 printf("Nave %d: caricati %d lotti di merce %d dal porto %d\n", barchetta.idn, merci_ric[i].num, merci_ric[i].id, barchetta.idp_part);
@@ -457,9 +474,11 @@ int main(int argc, char *argv[])
     sem_id = semget(getppid() + 1, NUM_SEMS, 0600);
     msgN_id = msgget(getppid() + 3, 0600);
     msgP_id = msgget(getppid() + 4, 0600);
+    dmp_id = shmget(getpid() + 5, sizeof(struct dump), 0600);
     bancid = semget(getppid() + 2, SO_PORTI, 0600 | IPC_CREAT);
     mem_id = shmget(getppid(), j, 0600);
     hlp = shmat(mem_id, NULL, 0600);
+    dmpptr = shmat(dmp_id, NULL, 0600);
     sh_mem.merci = (struct merce *)(hlp);
     hlp = (char *)(hlp + sizeof(struct merce) * SO_MERCI);
     sh_mem.porti = (struct porto *)(hlp);
@@ -480,6 +499,10 @@ int main(int argc, char *argv[])
     sa.sa_handler = handle_swell;
     sigaction(SIGWINCH, &sa, NULL);
 
+    LOCK
+    dmp.navi_vuote++;
+    UNLOCK
+
     do
     {
         if ((barchetta.idp_dest = getdest()) == -1)
@@ -497,7 +520,7 @@ int main(int argc, char *argv[])
             if (barchetta.idp_part != -1)
             {
                 LOCK
-                    printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n", barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
+                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n", barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
                 msgN.id = barchetta.idn + 1;
                 msgN.pid = getpid();
@@ -534,7 +557,7 @@ int main(int argc, char *argv[])
                 msgNf = false;
 
                 LOCK
-                    barchetta.coord = sh_mem.porti[barchetta.idp_part].coord;
+                barchetta.coord = sh_mem.porti[barchetta.idp_part].coord;
                 UNLOCK
 
                 printf("Nave %d: raggiunto porto %d, distante %f, dopo %f secondi\n", barchetta.idn, barchetta.idp_part, distance, (rem.tv_sec + rem.tv_nsec * 1e-9));
@@ -568,7 +591,7 @@ int main(int argc, char *argv[])
                 UNLOCK_BAN(barchetta.idp_part);
 
                 LOCK
-                    printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n", barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
+                printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n", barchetta.idn, barchetta.idp_dest, distance = DISTANCE(sh_mem.porti[barchetta.idp_dest].coord, barchetta.coord));
                 UNLOCK
 
                 msgN.id = barchetta.idn + 1;

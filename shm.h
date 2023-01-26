@@ -77,4 +77,12 @@ struct shared_data {
     struct porto * porti;  
 };
 
+struct dump {
+    int navi_vuote;
+    int navi_piene;
+    int navi_aff;
+    int navi_temp;
+    int navi_porto;
+};
+
 #endif

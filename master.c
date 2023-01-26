@@ -22,10 +22,13 @@ int mem_mael;
 int banchine;
 struct shared_data sh_mem;
 struct shared_data sh_mem_2;
+struct dump dmp;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
+void * dmpptr;
 int msgN_id;
 int msgP_id;
+int dmp_id;
 pid_t *porti;
 char *hlp;
 pid_t *navi;
@@ -53,6 +56,8 @@ void fine_sim(int signal)
     shmctl(mem_mael, 0, IPC_RMID);
     shmdt(hlp);
     shmctl(mem_id, 0, IPC_RMID);
+    shmdt(dmpptr);
+    shmctl(dmp_id, 0, IPC_RMID);
     printf("Deleting sem with id %d\n", sem_id);
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
@@ -116,6 +121,12 @@ void dump(){
         }
         printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", x0, x1, x2, x3, x4);
     }
+
+    printf("Navi in mare con carico a bordo: %d\n");
+    printf("Navi in mare senza carico: %d\n");
+    printf("Navi in porto che caricano/scaricano: %d");
+    printf("Navi in tempesta: %d");
+    printf("Navi affondate: %d\n");
 
     for(i = 0; i < SO_PORTI; i++){
         free(m[i]);
@@ -283,6 +294,8 @@ int main(int args, char *argv[])
 
     msgN_id = msgget(getpid() + 3, 0600 | IPC_CREAT);
     msgP_id = msgget(getpid() + 4, 0600 | IPC_CREAT);
+    dmp_id = shmget(getpid() + 5, sizeof(struct dump), 0600 | IPC_CREAT);
+    dmpptr = shmat(dmp_id, NULL, 0600);
 
     printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\n", 5, sem_id, msgN_id, msgP_id);
 
