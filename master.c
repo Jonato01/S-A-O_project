@@ -181,7 +181,7 @@ int main(int args,char* argv[]){
     semctl(sem_id, 0, SETVAL, 1);
     resetSems(sem_id);
     mem_id=shmget(getpid(),j,0600 | IPC_CREAT);
-    mem_mael=shmget(getpid()+9,j,0600 | IPC_CREAT);
+    mem_mael=shmget(getpid()+9,sizeof(pid_t)*so_navi,0600 | IPC_CREAT);
     navi=shmat(mem_mael,NULL,0600);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem.merci=(struct merce *) (hlp);

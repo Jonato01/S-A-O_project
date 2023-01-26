@@ -100,7 +100,7 @@ int main(){
     msgP_id = msgget(getppid() +4, 0600);
     printf("Meteo: msgP_id: %d\n", msgP_id);
     
-    mem_mael=shmget(getppid()+9,j,0600);
+    mem_mael=shmget(getppid()+9,sizeof(pid_t)*SO_NAVI,0600);
     navi=shmat(mem_mael,NULL,0600);
     hlp=shmat(mem_id,NULL,0600);
     sh_mem_2.porti=calloc(SO_PORTI,sizeof(struct porto));
