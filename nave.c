@@ -462,10 +462,12 @@ int main (int argc, char * argv[]){
                     printf("Nave %d: aggiunto porto %d alla coda carico\n", barchetta.idn, barchetta.idp_part);
                 }
                 carico();
-                if(msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_part+1, IPC_NOWAIT) == -1){
-                    perror("Errore msgrcv carico\n");
-                } else {
-                    printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
+                if(msgPf1){
+                    if(msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_part+1, IPC_NOWAIT) == -1){
+                        perror("Errore msgrcv carico\n");
+                    } else {
+                        printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
+                    }
                 }
                 msgPf1 = false;
 
@@ -516,10 +518,12 @@ int main (int argc, char * argv[]){
                     printf("Nave %d: aggiunto porto %d alla coda\n", barchetta.idn, barchetta.idp_dest);
                 }
                 scarico();
-                if(msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_dest+1, 0) == -1){
-                    perror("Errore msgrcv scarico");
-                } else {
-                    printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_dest);
+                if(msgPf2){
+                    if(msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_dest+1, 0) == -1){
+                        perror("Errore msgrcv scarico");
+                    } else {
+                        printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_dest);
+                    }
                 }
                 msgPf2 = false;
 
