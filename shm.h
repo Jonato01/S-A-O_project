@@ -46,7 +46,7 @@ struct my_msg_t {
 };
 
 struct merce {
-    int status; /*0: al porto, 1: su nave, 2: consegnato, 3: scaduta in porto*/
+    int status; /*0: al porto, 1: su nave, 2: consegnato, 3: scaduta in porto, 4: scaduta in nave*/
     int id;
     int size;
     int vita;
@@ -66,7 +66,6 @@ struct nave
 
 struct porto {
     int idp;
-
     struct coordinates coord;
     struct merce *ric;
     struct merce *off;

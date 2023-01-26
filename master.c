@@ -30,12 +30,12 @@ pid_t *porti;
 char *hlp;
 pid_t *navi;
 pid_t meteo;
+int giorni;
 
 void fine_sim(int signal)
 {
     int n;
-    free(sh_mem_2.porti);
-            
+    free(sh_mem_2.porti);       
     kill(meteo, SIGINT);
     LOCK for (n = 0; n < SO_PORTI || n < SO_NAVI; n++)
     {
@@ -44,7 +44,7 @@ void fine_sim(int signal)
         if (n < SO_PORTI)
             kill(porti[n], SIGINT);
     }
-    free(porti);
+    free(porti); 
     UNLOCK
     sops.sem_num = 4;
     sops.sem_op = 0;
@@ -66,12 +66,69 @@ void fine_sim(int signal)
     exit(0);
 }
 
+void dump(){
+    int i;
+    int j;
+    int x0 = 0;
+    int x1 = 0;
+    int x2 = 0;
+    int x3 = 0;
+    int x4 = 0;
+    int z;
+    struct merce **m;
+    m = calloc(SO_PORTI, sizeof(struct merce *));
+    for(i = 0; i < SO_PORTI; i++){
+        m[i] = calloc(MERCI_RIC_OFF*giorni, sizeof(struct merce));
+    }
+
+    LOCK
+    for(i = 0; i < SO_PORTI; i++){
+        for(j = 0; j < MERCI_RIC_OFF*giorni; j++){
+            m[i][j] = sh_mem_2.porti[i].off[j];
+        }
+        printf("\n");
+    }
+    UNLOCK
+
+    printf("\t   al porto\t      su nave\t   consegnate\tscadute in porto  scadute in nave\n");
+    for(z = 0; z < SO_MERCI; z++){
+        printf("Merce %d: ", z);
+        for(i = 0; i < SO_PORTI; i++){
+            for(j = 0; j < MERCI_RIC_OFF*giorni; j++){
+                switch(m[i][j].status){
+                    case 0:
+                        x0++;
+                        break;
+                    case 1:
+                        x1++;
+                        break;
+                    case 2:
+                        x2++;
+                        break;
+                    case 3:
+                        x3++;
+                        break;
+                    case 4:
+                        x4++;
+                        break;
+                }
+            }
+        }
+        printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", x0, x1, x2, x3, x4);
+    }
+
+    for(i = 0; i < SO_PORTI; i++){
+        free(m[i]);
+    }
+    free(m);
+}
+
 void alarm_giorni(int signal)
 {
     int n;
-
+    giorni++;
     LOCK
-        kill(meteo, SIGUSR1);
+    kill(meteo, SIGUSR1);
     for (n = 0; n < SO_PORTI; n++)
     {
         kill(porti[n], SIGUSR1);
@@ -82,6 +139,8 @@ void alarm_giorni(int signal)
             kill(navi[n], SIGUSR1);
     }
     UNLOCK
+
+    dump();
 }
 
 void resetSems(int sem_id)
@@ -126,16 +185,14 @@ void gennavi()
         {
             sprintf(c, "%d", i);
             argsnavi[1] = c;
-            
             free(sh_mem_2.porti);
             free(porti);   
             execve(NAVI_PATH_NAME, argsnavi, NULL);
             perror("Execve navi er");
             exit(1);
         }
-        
         LOCK
-            navi[i] = h;
+        navi[i] = h;
         UNLOCK
         sops.sem_num = 1;
         sops.sem_op = -1;
@@ -169,8 +226,8 @@ void genporti()
         sops.sem_num = 1;
         sops.sem_op = -1;
         semop(sem_id, &sops, 1);
-    }        free(c);
-
+    }
+    free(c);
 }
 
 void genmeteo()
@@ -189,11 +246,9 @@ int main(int args, char *argv[])
 
     int i;
     struct sigaction sa;
-
     int j;
     setvar();
     j = (sizeof(struct porto) + sizeof(struct merce) * 2 * MERCI_RIC_OFF_TOT) * SO_PORTI + (sizeof(struct merce)) * SO_MERCI;
-
     sh_mem_2.porti = calloc(sizeof(struct porto), SO_PORTI);
     srand(getpid());
 
@@ -201,7 +256,7 @@ int main(int args, char *argv[])
     sigaction(SIGINT, &sa, NULL);
     porti = calloc(SO_PORTI, sizeof(pid_t));
     /*creazione IPC obj*/
-
+    giorni = 0;
     bzero(&sa, sizeof(sa));
     sa.sa_handler = SIG_IGN;
     sigaction(SIGALRM, &sa, NULL);

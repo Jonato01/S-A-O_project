@@ -37,7 +37,6 @@ void handle_morte(int signal)
 {
     printf("Ammazzando il meteo...\n");
     free(sh_mem_2.porti);
-
     shmdt(hlp);
     shmdt(navi);
     sops.sem_num = 4;
@@ -155,7 +154,7 @@ int main()
             rem.tv_sec = intpart;
             rem.tv_nsec = fractpart * 1e9;
             nanosleep(&rem, &rem);
-            printf("METEO: inizia vortice\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            printf("METEO: inizia vortice\n");
             LOCK 
             do
             {

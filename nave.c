@@ -94,10 +94,23 @@ void handle_morte(int signal)
     exit(0);
 }
 
+int containsOff(int portoid, int merceid)
+{
+    int i;
+    for (i = 0; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
+    {
+        if (sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void handle_time(int signal)
 {
     int i;
-
+    int y;
     if (signal == SIGUSR1)
     {
         giorno++;
@@ -111,7 +124,11 @@ void handle_time(int signal)
                     printf("Nave %d: merce %d scaduta!\n", barchetta.idn, merci_ric[i].id);
                     barchetta.carico -= merci_ric[i].size * merci_ric[i].pre;
                     merci_ric[i].num = 0;
-                    merci_ric[i].status = 0;
+                    merci_ric[i].status = 4;
+                    y = containsOff(barchetta.idp_part, merci_ric[i].id);
+                    LOCK
+                    sh_mem_2.porti[barchetta.idp_part].off[y].status = 4;
+                    UNLOCK
                 }
             }
         }
@@ -202,19 +219,6 @@ void ordinaporti(struct coordinates coord)
         if (!swapped)
             break;
     }
-}
-
-int containsOff(int portoid, int merceid)
-{
-    int i;
-    for (i = 0; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
-    {
-        if (sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num)
-        {
-            return i;
-        }
-    }
-    return -1;
 }
 
 int containsRic(int portoid, int merceid)
@@ -334,7 +338,7 @@ void gennave()
     sops.sem_num = 1;
     sops.sem_op = 1;
     semop(sem_id, &sops, 1);
-     sops.sem_num = 2;
+    sops.sem_num = 2;
     sops.sem_op = -1;
     semop(sem_id, &sops, 1);
 }
@@ -356,9 +360,7 @@ void carico()
             {
                 merci_ric[i].status = 1;
                 LOCK
-                    sh_mem_2.porti[barchetta.idp_part]
-                        .off[y]
-                        .status = 1;
+                sh_mem_2.porti[barchetta.idp_part].off[y].status = 1;
                 t = merci_ric[i].pre;
                 while (t > 0)
                 {
@@ -399,9 +401,8 @@ void scarico()
             {
                 merci_ric[i].status = 2;
                 LOCK
-                    sh_mem_2.porti[barchetta.idp_dest]
-                        .ric[y]
-                        .status = 2;
+                sh_mem_2.porti[barchetta.idp_dest].off[y].status = 2;
+                sh_mem_2.porti[barchetta.idp_dest].ric[y].status = 2;
                 UNLOCK
                 t = 0;
                 while (merci_ric[i].pre > 0)

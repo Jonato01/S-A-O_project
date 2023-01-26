@@ -31,7 +31,6 @@ void handle_morte(int signal)
     sops.sem_num = 4;
     sops.sem_op = -1;
     semop(sem_id, &sops, 1);
-    
     shmdt(hlp);
     exit(0);
 }
@@ -39,11 +38,9 @@ void handle_morte(int signal)
 void handle_time(int signal)
 {
     int i = 0;
-
     giorno++;
     LOCK
-
-        for (i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[porto_id].off[i].size; i++)
+    for (i = 0; i < MERCI_RIC_OFF_TOT && sh_mem_2.porti[porto_id].off[i].size; i++)
     {
         if (!sh_mem_2.porti[porto_id].off[i].vita && !sh_mem_2.porti[porto_id].off[i].num)
         {
@@ -52,7 +49,7 @@ void handle_time(int signal)
             {
                 bzero(&sh_mem_2.porti[porto_id].off[i], sizeof(struct merce));
                 sh_mem_2.porti[porto_id].off[i].size = -1;
-                /*Far scadere bene le merci*/
+                sh_mem_2.porti[porto_id].off[i].status = 3;       
             }
         }
     }
@@ -242,8 +239,7 @@ int main(int argc, char *argv[])
     }
     giorno = 0;
     LOCK
-        sh_mem.porti[porto_id]
-            .coord.x = coor.x;
+    sh_mem.porti[porto_id].coord.x = coor.x;
     sh_mem.porti[porto_id].coord.y = coor.y;
     maxbanchine = rand() % SO_BANCHINE + 1;
     semctl(bancid, porto_id, SETVAL, maxbanchine);
