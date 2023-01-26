@@ -30,7 +30,7 @@ int bancid;
 struct nave barchetta;
 struct timespec rem;
 bool travelling; bool working; bool waiting_storm; bool waiting_swell; bool waiting_day;
-
+bool msgNf; bool msgPf1; bool msgPf2;
 int *ord; /* ID porti in ordine di distanza*/
 
 void handle_morte(int signal){
@@ -39,17 +39,32 @@ void handle_morte(int signal){
     sops.sem_op = 1;            
     semop(sem_id,&sops, 1);
     UNLOCK
-    if(msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, IPC_NOWAIT) == -1){
-        if(errno != ENOMSG)
-            perror("Errore in handle_morte 1");
-    } else {
-        printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
+    if(msgNf){
+        printf("La nave %d era in viaggio\n", barchetta.idn);
+        if(msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn+1, IPC_NOWAIT) == -1){
+            if(errno != ENOMSG)
+                perror("Errore in handle_morte 1");
+        } else {
+            printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
+        }
     }
-    if(msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_part+1, IPC_NOWAIT) == -1){
-        if(errno != ENOMSG)
-            perror("Errore in handle_morte 2");
-    } else {
-        printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
+    if(msgPf1){
+        printf("La nave %d era al porto\n", barchetta.idn);
+        if(msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_part+1, IPC_NOWAIT) == -1){
+            if(errno != ENOMSG)
+                perror("Errore in handle_morte 2");
+        } else {
+            printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
+        }
+    }
+    if(msgPf2){
+        printf("La nave %d era al porto\n", barchetta.idn);
+        if(msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_dest+1, IPC_NOWAIT) == -1){
+            if(errno != ENOMSG)
+                perror("Errore in handle_morte 2");
+        } else {
+            printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_dest);
+        }
     }
     printf("La nave %d ha finito di vivere\n", barchetta.idn);
     shmdt (hlp);
@@ -403,7 +418,8 @@ int main (int argc, char * argv[]){
                 printf("Nave %d: mi dirigo verso il porto %d\nDistanza: %f\n\n",barchetta.idn, barchetta.idp_part, distance = DISTANCE(sh_mem.porti[barchetta.idp_part].coord, barchetta.coord));
                 UNLOCK
                 msgN.id = barchetta.idn+1;
-                msgN.pid = getpid();  
+                msgN.pid = getpid(); 
+                msgNf = true;
                 if(msgsnd(msgN_id, &msgN, sizeof(msgN), 0) == -1){
                     TEST_ERROR;
                 } else {
@@ -427,6 +443,7 @@ int main (int argc, char * argv[]){
                 } else {
                     printf("Nave %d: rimossa dalla coda\n",barchetta.idn);
                 }
+                msgNf = false;
                 
                 LOCK           
                 barchetta.coord = sh_mem.porti[barchetta.idp_part].coord;
@@ -438,6 +455,7 @@ int main (int argc, char * argv[]){
 
                 msgP.id = barchetta.idp_part+1;
                 msgP.pid = getpid();
+                msgPf1 = true;
                 if(msgsnd(msgP_id, &msgP, sizeof(msgP), 0) == -1)
                     perror("Errore sndmsg carico");
                  else {
@@ -449,6 +467,7 @@ int main (int argc, char * argv[]){
                 } else {
                     printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_part);
                 }
+                msgPf1 = false;
 
                 printf("Nave %d: finito di caricare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_part);
@@ -458,7 +477,8 @@ int main (int argc, char * argv[]){
                 UNLOCK
 
                 msgN.id = barchetta.idn+1;
-                msgN.pid = getpid();               
+                msgN.pid = getpid();   
+                msgNf = true;            
                 if(msgsnd(msgN_id, &msgN, sizeof(msgN), 0) == -1){
                     TEST_ERROR
                 } else {
@@ -478,7 +498,8 @@ int main (int argc, char * argv[]){
                 } else {                  
                     printf("Nave %d: rimossa dalla coda (ritorno)\n", barchetta.idn);
                 }
-                
+                msgNf = false;
+
                 LOCK
                 barchetta.coord = sh_mem.porti[barchetta.idp_dest].coord;
                 UNLOCK
@@ -488,6 +509,7 @@ int main (int argc, char * argv[]){
 
                 msgP.id = barchetta.idp_dest +1;
                 msgP.pid = getpid();
+                msgPf2 = true;
                 if(msgsnd(msgP_id, &msgP, sizeof(msgP), 0) == -1){
                     perror("Errore msgsnd scarico");
                 } else {
@@ -499,6 +521,7 @@ int main (int argc, char * argv[]){
                 } else {
                     printf("Nave %d: rimosso porto %d dalla coda\n",barchetta.idn, barchetta.idp_dest);
                 }
+                msgPf2 = false;
 
                 printf("Nave %d: finito di consegnare\n\n", barchetta.idn);
                 UNLOCK_BAN (barchetta.idp_dest);
