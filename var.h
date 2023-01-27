@@ -187,7 +187,9 @@ void setvar(){
                 {printf("var merci_ric_off troppo piccola verrà assegnata di default\n\n");
                  merci_ric_off=so_merci/2;
                 }
-                
+                if(SO_MERCI==1)
+                MERCI_RIC_OFF=1;
+
                 }
         } else if((tr=strstr(line,"so_fill"))!=NULL){
             while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))

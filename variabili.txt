@@ -6,7 +6,7 @@ so_giorni 5
 so_lato 100.00
 so_loadspeed 500
 so_max_vita 30
-so_merci 5
+so_merci 1
 so_min_vita 20
 so_size 100
 so_fill 10000

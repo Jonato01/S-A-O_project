@@ -20,7 +20,7 @@ struct shared_data sh_mem_2;
 struct coordinates coor;
 int portid;
 struct dump_2 * portsh;
-char *hlp;
+char *hlp; int boolea;
 int sem_id;
 int porto_id;
 int giorno;
@@ -56,8 +56,15 @@ void handle_time(int signal)
         }
     }
 
+    if(so_merci>1){
     genmerci();
-    genric();
+    genric();}
+    else{
+        if(boolea)
+        genmerci();
+        else 
+        genric();
+    }
     UNLOCK
     sops.sem_num = 2;
     sops.sem_op = 1;
@@ -68,7 +75,6 @@ void creaPorto()
 {
     /*gestire caso in cui si provi a creare più porti nelle stesse coordinate*/
     int i;
-
     bool flag = false;
     do
     {
@@ -76,7 +82,7 @@ void creaPorto()
         coor.y = rand() % (int)(SO_LATO + 1);
 
         for (i = 0; i < porto_id; i++)
-        {
+        {   
             if (coor.x == sh_mem.porti[i].coord.x && coor.y == sh_mem.porti[i].coord.y)
             {
                 flag = true;
@@ -86,7 +92,7 @@ void creaPorto()
             {
                 flag = false;
             }
-        }
+        }   
     } while (flag);
 }
 
@@ -96,11 +102,16 @@ void genric()
     int i;
     int x;
     int r;
-    bool off;
+    int off;
+    int * merk;
+    merk=calloc(so_merci,sizeof(int));
     srand(getpid());
+    off = 0;
     for (i = MERCI_RIC_OFF * giorno; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
     {
-        while (1)
+        
+
+        while (off<SO_MERCI)
         {
             r = rand() % SO_MERCI + 1;
             for (x = MERCI_RIC_OFF * giorno; x < i; x++)
@@ -108,13 +119,16 @@ void genric()
                 if (sh_mem_2.porti[porto_id].ric[x].id == r)
                     break;
             }
-            off = true;
-            for (j = 0; j < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno) && off; j++)
+            
+            for (j = 0; j < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno) && off<SO_MERCI; j++)
             {
-                if (r == sh_mem_2.porti[porto_id].off[j].id)
-                    off = false;
+                if (r == sh_mem_2.porti[porto_id].off[j].id && !merk[r] && sh_mem_2.porti[porto_id].off[j].vita)
+                    {
+                        merk[r]=1;
+                        off++;
+                    }
             }
-            if (x == i && off)
+            if (x == i && !merk[r])
             {
                 sh_mem_2.porti[porto_id].ric[x].id = r;
                 sh_mem_2.porti[porto_id].ric[x].vita = sh_mem.merci[r - 1].vita;
@@ -132,6 +146,7 @@ void genric()
         printf("creata domanda di %d lotti da %d ton di merce %d a porto %d\n", sh_mem_2.porti[porto_id].ric[x].num, sh_mem.merci[sh_mem_2.porti[porto_id].ric[x].id - 1].size, sh_mem_2.porti[porto_id].ric[i].id, porto_id);
     }
     printf("\n");
+    free(merk);
 }
 
 void genmerci()
@@ -140,11 +155,15 @@ void genmerci()
     int x;
     int r;
     int j;
-    bool ric;
+    int off;
+    int * merk;
+    merk=calloc(so_merci,sizeof(int));
     srand(getpid());
+    off=0;
     for (i = MERCI_RIC_OFF * giorno; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
     {
-        while (1)
+        
+        while (off<so_merci)
         {
             r = rand() % SO_MERCI + 1;
             for (x = MERCI_RIC_OFF * giorno; x < i; x++)
@@ -152,13 +171,16 @@ void genmerci()
                 if (sh_mem_2.porti[porto_id].off[x].id == r)
                     break;
             }
-            ric = true;
-            for (j = 0; j < (MERCI_RIC_OFF * giorno) && ric; j++)
+           
+            for (j = 0; j < (MERCI_RIC_OFF * giorno) && off<so_merci ; j++)
             {
-                if (r == sh_mem_2.porti[porto_id].ric[j].id && sh_mem_2.porti[porto_id].ric[j].num)
-                    ric = false;
+                if (r == sh_mem_2.porti[porto_id].ric[j].id && !merk[r] && sh_mem_2.porti[porto_id].ric[j].num)
+                    {
+                        off++;
+                        merk[r]=1;
+                    }
             }
-            if (x == i && ric)
+            if (x == i && !merk[r])
             {
                 sh_mem_2.porti[porto_id].off[x].id = r;
                 sh_mem_2.porti[porto_id].off[x].vita = sh_mem.merci[r - 1].vita;
@@ -192,7 +214,7 @@ int main(int argc, char *argv[])
     j = (sizeof(struct porto) + sizeof(struct merce) * 2 * MERCI_RIC_OFF_TOT) * SO_PORTI + (sizeof(struct merce)) * SO_MERCI;
     srand(getpid());
     sh_mem_2.porti = calloc(SO_PORTI, sizeof(struct porto));
-
+    boolea=rand()%2;
     bzero(&sa, sizeof(sa));
     sa.sa_handler = SIG_IGN;
     sigaction(SIGINT, &sa, NULL);
@@ -243,16 +265,21 @@ int main(int argc, char *argv[])
         creaPorto();
         break;
     }
-    giorno = 0;
     LOCK
     sh_mem.porti[porto_id].coord.x = coor.x;
     sh_mem.porti[porto_id].coord.y = coor.y;
     maxbanchine = rand() % SO_BANCHINE + 1;
     semctl(bancid, porto_id, SETVAL, maxbanchine);
     printf("Creato il porto %d in posizione %f, %f, con %d banchine\n", porto_id, coor.x, coor.y, maxbanchine);
-
+    if(so_merci>1){
     genmerci();
-    genric();
+    genric();}
+    else{
+        if(boolea)
+        genmerci();
+        else 
+        genric();
+    }
     UNLOCK
     sa.sa_handler = handle_time;
     sigaction(SIGUSR1, &sa, NULL);
