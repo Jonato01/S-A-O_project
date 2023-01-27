@@ -183,10 +183,12 @@ void setvar(){
             }
             else{
                 merci_ric_off=atoi(tr);
-                if((so_merci/2)<merci_ric_off)
+                if((so_merci/2)<merci_ric_off &&SO_MERCI!=1)
                 {printf("var merci_ric_off troppo piccola verrà assegnata di default\n\n");
                  merci_ric_off=so_merci/2;
-            }}
+                }
+                
+                }
         } else if((tr=strstr(line,"so_fill"))!=NULL){
             while(!((*tr<=57 && *tr>=48) || *tr==10 || *tr==EOF))
                 tr++;

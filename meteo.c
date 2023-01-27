@@ -22,9 +22,13 @@ int msgN_id;
 int msgP_id;
 struct shared_data sh_mem;
 struct shared_data sh_mem_2;
+struct dump* dmpptr;
+int dmp_id;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
 struct timespec rem;
+struct dump * dmpptr;
+int dmp_id;
 pid_t *navi;
 int mem_mael;
 int mem_id;
@@ -39,6 +43,7 @@ void handle_morte(int signal)
     free(sh_mem_2.porti);
     shmdt(hlp);
     shmdt(navi);
+    shmdt(dmpptr);
     sops.sem_num = 4;
     sops.sem_op = -1;
     semop(sem_id, &sops, 1);
@@ -63,6 +68,7 @@ void tempesta()
         else
         {
             printf("Scatenata tempesta su nave %d!\n", (int)msgN.id - 1);
+            LOCK dmpptr->navi_temp++; UNLOCK
             kill(msgN.pid, SIGUSR2);
         }
     } while (errno == EINTR);
@@ -90,8 +96,12 @@ void mareggiata()
             printf("Porto %d in mareggiata!\n", (int)msgP.id - 1);
             kill(msgP.pid, SIGWINCH /* consigliato da chatGPT come SIGUSR3*/);
             c++;
+            LOCK
+            dmpptr->mareggiata++;
+            UNLOCK
         }
     }
+    
     printf("METEO: colpite %d navi dalla mareggiata\n", c);
 }
 
@@ -124,8 +134,10 @@ int main()
     msgN_id = msgget(getppid() + 3, 0600);
     printf("Meteo: msgN_id: %d\n", msgN_id);
     msgP_id = msgget(getppid() + 4, 0600);
+    
     printf("Meteo: msgP_id: %d\n", msgP_id);
-
+    dmp_id = shmget(getppid() + 5, sizeof(struct dump), 0600);
+    dmpptr = shmat(dmp_id, NULL, 0600);
     mem_mael = shmget(getppid() + 9, sizeof(pid_t) * SO_NAVI, 0600);
     navi = shmat(mem_mael, NULL, 0600);
     hlp = shmat(mem_id, NULL, 0600);
@@ -163,6 +175,7 @@ int main()
             while (navi[i] == -1);
             UNLOCK
             printf("Nave  colpita dal vortice!! pid = %d\n\n", navi[i]);
+            dmpptr->navi_aff++;
             LOCK
                 kill(navi[i], SIGINT);
             navi[i] = -1;
@@ -173,6 +186,7 @@ int main()
             {
                 printf("Non ci sono più navi!\n");
                 flag = false;
+                kill(getppid(),SIGINT);
             }
         }
         else

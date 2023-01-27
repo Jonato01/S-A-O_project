@@ -18,6 +18,8 @@ struct sembuf sops;
 struct shared_data sh_mem;
 struct shared_data sh_mem_2;
 struct coordinates coor;
+int portid;
+struct dump_2 * portsh;
 char *hlp;
 int sem_id;
 int porto_id;
@@ -32,6 +34,7 @@ void handle_morte(int signal)
     sops.sem_op = -1;
     semop(sem_id, &sops, 1);
     shmdt(hlp);
+    shmdt(portsh);
     exit(0);
 }
 
@@ -47,8 +50,7 @@ void handle_time(int signal)
             sh_mem_2.porti[porto_id].off[i].vita--;
             if (sh_mem_2.porti[porto_id].off[i].vita == 0)
             {
-                bzero(&sh_mem_2.porti[porto_id].off[i], sizeof(struct merce));
-                sh_mem_2.porti[porto_id].off[i].size = -1;
+
                 sh_mem_2.porti[porto_id].off[i].status = 3;       
             }
         }
@@ -121,6 +123,7 @@ void genric()
                 r = (SO_FILL / SO_PORTI / MERCI_RIC_OFF_TOT / SO_GIORNI) / sh_mem_2.porti[porto_id].ric[x].size;
                 if ((SO_FILL / SO_PORTI / MERCI_RIC_OFF_TOT / SO_GIORNI) % sh_mem_2.porti[porto_id].ric[x].size)
                     r++;
+                portsh[porto_id].merci_ric+=r;
                 sh_mem_2.porti[porto_id].ric[x].num = r;
                 break;
             }
@@ -165,6 +168,8 @@ void genmerci()
                 r = (SO_FILL / SO_PORTI / MERCI_RIC_OFF_TOT / SO_GIORNI) / sh_mem_2.porti[porto_id].off[x].size;
                 if (r == 0)
                     r++;
+                portsh[porto_id].num_merc+=r;
+                portsh[porto_id].merci_off+=r;
                 sh_mem_2.porti[porto_id].off[x].num = r;
                 sh_mem_2.porti[porto_id].off[x].status = 0;
                 break;
@@ -195,7 +200,8 @@ int main(int argc, char *argv[])
     porto_id = atoi(argv[1]);
     bancid = semget(getppid() + 2, SO_PORTI, 0600);
     sem_id = semget(getppid() + 1, NUM_SEMS, 0600);
-
+    portid=shmget(getppid()+10,sizeof(struct dump_2)*SO_PORTI, 0600);
+    portsh=shmat(portid,NULL,0600);
     mem_id = shmget(getppid(), j, 0600);
     hlp = shmat(mem_id, NULL, 0600);
 
@@ -211,9 +217,9 @@ int main(int argc, char *argv[])
         hlp = (char *)(hlp + sizeof(struct merce) * MERCI_RIC_OFF_TOT);
     }
     LOCK
-        sh_mem.porti[porto_id]
-            .idp = porto_id;
+        sh_mem.porti[porto_id].idp = porto_id;
     UNLOCK
+
     /*TEST ERROR*/
     switch (porto_id)
     {

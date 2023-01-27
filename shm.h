@@ -76,13 +76,19 @@ struct shared_data {
     struct merce * merci;
     struct porto * porti;  
 };
-
+struct dump_2 {
+    int num_merc;
+    int merci_spe;
+    int merci_ric;
+    int merci_off;
+    int merci_cons;
+};
 struct dump {
     int navi_vuote;
     int navi_piene;
     int navi_aff;
     int navi_temp;
-    int navi_porto;
+    int mareggiata;
 };
 
 #endif

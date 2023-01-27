@@ -20,27 +20,32 @@ int sem_id;
 int mem_id;
 int mem_mael;
 int banchine;
+int portid;
+struct timespec rem;
+struct dump_2 * portsh;
 struct shared_data sh_mem;
 struct shared_data sh_mem_2;
 struct dump dmp;
 struct my_msg_t msgN;
 struct my_msg_t msgP;
-void * dmpptr;
-int msgN_id;
-int msgP_id;
+struct dump* dmpptr;
 int dmp_id;
+int msgN_id;
+int msgP_id; 
+
 pid_t *porti;
 char *hlp;
 pid_t *navi;
 pid_t meteo;
 int giorni;
-
+void dump();
 void fine_sim(int signal)
 {
-    int n;
-    free(sh_mem_2.porti);       
+    int n; int ric_max=0; int off_max=0; int id_max_off=0; int id_max_ric=0;int i;
+    free(sh_mem_2.porti); 
+    dump();      
     kill(meteo, SIGINT);
-    LOCK for (n = 0; n < SO_PORTI || n < SO_NAVI; n++)
+    for (n = 0; n < SO_PORTI || n < SO_NAVI; n++)
     {
         if (n < SO_NAVI && navi[n] != -1)
             kill(navi[n], SIGINT);
@@ -48,7 +53,20 @@ void fine_sim(int signal)
             kill(porti[n], SIGINT);
     }
     free(porti); 
-    UNLOCK
+    for(i=0;i<SO_PORTI;i++){
+        if(portsh[i].merci_ric>=ric_max)
+        {
+            ric_max=portsh[i].merci_ric;
+            id_max_ric=i;
+        }
+        if(portsh[i].merci_off>=off_max)
+        {
+            off_max=portsh[i].merci_off;
+            id_max_off=i;
+        }
+
+    }
+    printf("porto che ha richiesto di più %d\n porto che offerto di più %d\n",id_max_ric,id_max_off);
     sops.sem_num = 4;
     sops.sem_op = 0;
     semop(sem_id, &sops, 1);
@@ -58,6 +76,8 @@ void fine_sim(int signal)
     shmctl(mem_id, 0, IPC_RMID);
     shmdt(dmpptr);
     shmctl(dmp_id, 0, IPC_RMID);
+    shmdt(portsh);
+    shmctl(portid, 0, IPC_RMID);
     printf("Deleting sem with id %d\n", sem_id);
     semctl(sem_id, 0, IPC_RMID);
     semctl(banchine, 0, IPC_RMID);
@@ -81,19 +101,22 @@ void dump(){
     int x4 = 0;
     int z;
     struct merce **m;
+    struct msqid_ds my_q_data;
+    msgctl(msgP_id, IPC_STAT, &my_q_data);
+    
     m = calloc(SO_PORTI, sizeof(struct merce *));
     for(i = 0; i < SO_PORTI; i++){
         m[i] = calloc(MERCI_RIC_OFF*giorni, sizeof(struct merce));
     }
 
-    LOCK
+    
     for(i = 0; i < SO_PORTI; i++){
         for(j = 0; j < MERCI_RIC_OFF*giorni; j++){
             m[i][j] = sh_mem_2.porti[i].off[j];
         }
         printf("\n");
     }
-    UNLOCK
+    
 
     printf("\t   al porto\t      su nave\t   consegnate\tscadute in porto  scadute in nave\n");
     for(z = 0; z < SO_MERCI; z++){
@@ -121,12 +144,16 @@ void dump(){
         }
         printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", x0, x1, x2, x3, x4);
     }
+    for(i = 0; i < SO_PORTI; i++){
+        printf("porto %d: merci ric: %d , merci off: %d, merci cons: %d, merci spedite %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe);    
+            }
+        
 
-    printf("Navi in mare con carico a bordo: %d\n");
-    printf("Navi in mare senza carico: %d\n");
-    printf("Navi in porto che caricano/scaricano: %d");
-    printf("Navi in tempesta: %d");
-    printf("Navi affondate: %d\n");
+    printf("Navi in mare con carico a bordo: %d\n",dmpptr->navi_piene);
+    printf("Navi in mare senza carico: %d\n",dmpptr->navi_vuote);
+    printf("Navi in porto che caricano/scaricano: %ld",my_q_data.msg_qnum);
+    printf("Navi colpite da tempesta: %d\n ",dmpptr->navi_temp);
+    printf("Navi affondate: %d\n",dmpptr->navi_aff);
 
     for(i = 0; i < SO_PORTI; i++){
         free(m[i]);
@@ -138,7 +165,7 @@ void alarm_giorni(int signal)
 {
     int n;
     giorni++;
-    LOCK
+    
     kill(meteo, SIGUSR1);
     for (n = 0; n < SO_PORTI; n++)
     {
@@ -149,7 +176,6 @@ void alarm_giorni(int signal)
         if (navi[n] != -1)
             kill(navi[n], SIGUSR1);
     }
-    UNLOCK
 
     dump();
 }
@@ -270,6 +296,7 @@ int main(int args, char *argv[])
     giorni = 0;
     bzero(&sa, sizeof(sa));
     sa.sa_handler = SIG_IGN;
+
     sigaction(SIGALRM, &sa, NULL);
     sa.sa_handler = fine_sim;
     sigaction(SIGINT, &sa, NULL);
@@ -278,6 +305,8 @@ int main(int args, char *argv[])
     resetSems(sem_id);
     mem_id = shmget(getpid(), j, 0600 | IPC_CREAT);
     mem_mael = shmget(getpid() + 9, sizeof(pid_t) * so_navi, 0600 | IPC_CREAT);
+    portid=shmget(getpid()+10,sizeof(struct dump_2)*SO_PORTI, 0600 | IPC_CREAT);
+    portsh=shmat(portid,NULL,0600);
     navi = shmat(mem_mael, NULL, 0600);
     hlp = shmat(mem_id, NULL, 0600);
     sh_mem.merci = (struct merce *)(hlp);
@@ -296,7 +325,7 @@ int main(int args, char *argv[])
     msgP_id = msgget(getpid() + 4, 0600 | IPC_CREAT);
     dmp_id = shmget(getpid() + 5, sizeof(struct dump), 0600 | IPC_CREAT);
     dmpptr = shmat(dmp_id, NULL, 0600);
-
+    
     printf("Creating shm with id: %d\nCreating sem with id:%d\nCreating msgN with id:%d\nCreating msgP with id:%d\n", 5, sem_id, msgN_id, msgP_id);
 
     /*creazione merci*/
@@ -320,12 +349,15 @@ int main(int args, char *argv[])
     sa.sa_handler = fine_sim;
     sigaction(SIGINT, &sa, NULL);
     semctl(sem_id, 2, SETVAL, 0);
+
     for (i = 0; i < SO_GIORNI - 1; i++)
     {
-        sleep(1);
+        rem.tv_sec=1;
+        nanosleep(&rem,&rem);
         raise(SIGALRM);
     }
-    sleep(1);
+    rem.tv_sec=1;
+    nanosleep(&rem,&rem);
     raise(SIGINT);
 
     return 0;
