@@ -128,7 +128,7 @@ void genric()
                         off++;
                     }
             }
-            if (x == i && !merk[r])
+            if (x == i && merk[r])
             {
                 sh_mem_2.porti[porto_id].ric[x].id = r;
                 sh_mem_2.porti[porto_id].ric[x].vita = sh_mem.merci[r - 1].vita;
@@ -139,6 +139,7 @@ void genric()
                     r++;
                 portsh[porto_id].merci_ric+=r;
                 sh_mem_2.porti[porto_id].ric[x].num = r;
+                off = 0;
                 break;
             }
         }
@@ -194,6 +195,7 @@ void genmerci()
                 portsh[porto_id].merci_off+=r;
                 sh_mem_2.porti[porto_id].off[x].num = r;
                 sh_mem_2.porti[porto_id].off[x].status = 0;
+                off=0;
                 break;
             }
         }
