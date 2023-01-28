@@ -79,13 +79,15 @@ void mareggiata()
     int porto;
     int c = 0;
     srand(getpid());
-    porto = rand() % (SO_PORTI + 1) + 1;
+    porto = rand() % (SO_PORTI) + 1;
     /* printf("Mareggiata in porto %d!\n", porto - 1); */
     while (1)
     {
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1)
         {
-            if (errno)
+            if(errno==ENOMSG)
+            dmpptr->mareggiata++; /*nessuna nave colpita*/
+            else if (errno)
             {
                 perror("Errore in mareggiata!");
             }

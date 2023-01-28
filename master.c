@@ -237,9 +237,6 @@ void genporti()
             perror("Execve porti er");
             exit(1);
         }
-        msgP.id=i+1;
-        msgP.pid=j;
-        msgsnd(msgP_id,&msgP,sizeof(msgP),IPC_NOWAIT);
         porti[i]=j;
         sops.sem_num = 1;
         sops.sem_op = -1;
