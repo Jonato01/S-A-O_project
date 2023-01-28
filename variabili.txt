@@ -5,13 +5,13 @@ so_capacity 120
 so_giorni 20
 so_lato 100.00
 so_loadspeed 500
-so_max_vita 50
-so_merci 1
-so_min_vita 34
+so_max_vita 5
+so_merci 8
+so_min_vita 2
 so_size 100
 so_fill 10000
 so_speed 200
-merci_ric_off 1
+merci_ric_off 3
 so_storm_duration 2
 so_swell_duration 3
 so_maelstrom 100000

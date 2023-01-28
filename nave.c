@@ -111,7 +111,7 @@ int containsOff(int portoid, int merceid)
     int i;
     for (i = 0; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
     {
-        if (sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num )
+        if (sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num-sh_mem_2.porti[portoid].off[i].pre>0 )
         {
             return i;
         }
@@ -126,9 +126,9 @@ void handle_time(int signal)
     if (signal == SIGUSR1)
     {
         giorno++;
-        for (i = 0; i < SO_MERCI; i++)
+        for (i = 0; i < SO_MERCI*SO_GIORNI; i++)
         {
-            if (merci_ric[i].id != -1 && merci_ric[i].vita> 0)
+            if (merci_ric[i].id != -1 && merci_ric[i].vita> 0 )
             {
                 merci_ric[i].vita--;
                 if (merci_ric[i].vita == 0)
@@ -333,7 +333,7 @@ int getdest()
                         nmerci++;
                         barchetta.carico_pre += sh_mem_2.porti[ord[i]].ric[j].size;
                     }
-                    /* printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]); 
+                     /*printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]); 
                 */}
                 else
                 {
@@ -461,7 +461,7 @@ void scarico()
                     t++;
                 }
                 merci_ric[i].size = 0;
-                /* printf("Nave %d: consegnati %d lotti di merce %d al porto %d\n", barchetta.idn, t, merci_ric[i].id, barchetta.idp_dest); */
+                 /*printf("Nave %d: consegnati %d lotti di merce %d al porto %d\n", barchetta.idn, t, merci_ric[i].id, barchetta.idp_dest); */
                 merci_ric[i].id = -1;
             }
         }
@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
                     if (msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_part + 1, IPC_NOWAIT) == -1)
                     {
                          if (errno != ENOMSG)
-                        perror("Errore msgrcv carico\n");
+                        TEST_ERROR
                     }
         
                         /* printf("Nave %d: rimosso porto %d dalla coda\n", barchetta.idn, barchetta.idp_part); */
@@ -626,7 +626,7 @@ int main(int argc, char *argv[])
                 }
                 msgPf1 = false;
 
-                /* printf("Nave %d: finito di caricare\n\n", barchetta.idn); */
+                 /*printf("Nave %d: finito di caricare\n\n", barchetta.idn);*/ 
                 UNLOCK_BAN(barchetta.idp_part);
 
                 LOCK
@@ -660,7 +660,7 @@ int main(int argc, char *argv[])
                 if (msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn + 1, IPC_NOWAIT) == -1)
                 {
                      if (errno != ENOMSG)
-                    perror("Errore msgrcv nave in viaggio\n");
+                    TEST_ERROR
                 }
                 
                     /* printf("Nave %d: rimossa dalla coda (ritorno)\n", barchetta.idn); */
@@ -693,7 +693,7 @@ int main(int argc, char *argv[])
                     if (msgrcv(msgP_id, &msgP, sizeof(msgN), barchetta.idp_dest + 1, 0) == -1)
                     {
                          if (errno != ENOMSG)
-                        perror("Errore msgrcv scarico");
+                        TEST_ERROR
                     }
                     
                         /* printf("Nave %d: rimosso porto %d dalla coda\n", barchetta.idn, barchetta.idp_dest); */
@@ -728,11 +728,13 @@ int main(int argc, char *argv[])
             }
             else
             {
-              
+                /* printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest); */
+                           
             barchetta.carico_pre=0;
+          
             }
         }
-         /*printf("\n\n\n\n\n\nNAVE %d: finito il ciclo\n\n\n\n\n\n\n", barchetta.idn);*/ 
+         /*printf("\n\n\n\n\n\nNAVE %d: finito il ciclo\n\n\n\n\n\n\n", barchetta.idn);*/
     } while (1);
     return 0;
 }

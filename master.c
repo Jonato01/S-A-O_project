@@ -123,7 +123,7 @@ void dump(){
         printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", merck[z].mer_por, merck[z].mer_nav, merck[z].mer_con, merck[z].sca_por, merck[z].sca_nav);
     }
     for(i = 0; i < SO_PORTI; i++){
-        printf("porto %d: merci ric: %d , merci off: %d, merci cons: %d, merci spedite %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe);    
+        printf("porto %d: merci ric: %d , merci off: %d, merci spedite: %d, merci consegnate %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe);    
             }
         
     printf(" porti colpiti da mareggiata %d\n",dmpptr->mareggiata);
