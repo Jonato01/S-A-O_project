@@ -207,7 +207,7 @@ void setvar(){
                     printf("Attenzione: la durata minima di vita deve essere pari o superiore a 1, impostato valore di default");
                     so_min_vita = 2;
                 } else if (so_min_vita > so_max_vita){
-                    printf("Attenzione: la durata minima di vita deve essere pari o inferiore alla durata massima, impostato il valore di default")
+                    printf("Attenzione: la durata minima di vita deve essere pari o inferiore alla durata massima, impostato il valore di default");
                 }
             }
         }else if((tr=strstr(line,"so_maelstrom"))!=NULL) {
@@ -218,7 +218,7 @@ void setvar(){
                 exit(EXIT_FAILURE);
             } else {
                 so_maelstrom=atoi(tr);
-                if(so_smaelstrom <= 0){
+                if(so_maelstrom <= 0){
                     printf("Attenzione: l'intervallo di tempo tra i vortici deve essere maggiore o uguale a 1, impostato valore di default");
                     so_maelstrom = 20;
                 }
