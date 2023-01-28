@@ -266,9 +266,10 @@ int main(int args, char *argv[])
     j = (sizeof(struct porto) + sizeof(struct merce) * 2 * MERCI_RIC_OFF_TOT) * SO_PORTI + (sizeof(struct merce)) * SO_MERCI;
     sh_mem_2.porti = calloc(sizeof(struct porto), SO_PORTI);
     srand(getpid());
-
+    sa.sa_handler= SIG_IGN;
+    sigaction(SIGINT,&sa,NULL);
     sa.sa_handler = fine_sim;
-    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGUSR2, &sa, NULL);
     porti = calloc(SO_PORTI, sizeof(pid_t));
     /*creazione IPC obj*/
     giorni = 0;
@@ -338,7 +339,7 @@ int main(int args, char *argv[])
     }
     rem.tv_sec=1;
     nanosleep(&rem,&rem);
-    raise(SIGINT);
+    raise(SIGUSR2);
 
     return 0;
 }

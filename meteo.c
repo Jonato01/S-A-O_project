@@ -185,7 +185,7 @@ int main()
             {
                 /*printf("Non ci sono più navi!\n");*/
                 flag = false;
-                kill(getppid(),SIGINT);
+                kill(getppid(),SIGUSR2);
             }
         }
         else
