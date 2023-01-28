@@ -108,7 +108,7 @@ int containsOff(int portoid, int merceid)
     int i;
     for (i = 0; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
     {
-        if (sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].vita)
+        if (sh_mem_2.porti[portoid].off[i].id == merceid && sh_mem_2.porti[portoid].off[i].num )
         {
             return i;
         }
@@ -244,7 +244,7 @@ int containsRic(int portoid, int merceid)
     int i;
     for (i = 0; i < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno); i++)
     {
-        if (sh_mem_2.porti[portoid].ric[i].id == merceid && sh_mem_2.porti[portoid].ric[i].vita)
+        if (sh_mem_2.porti[portoid].ric[i].id == merceid && sh_mem_2.porti[portoid].ric[i].num)
         {
             return i;
         }
@@ -255,7 +255,7 @@ int containsRic(int portoid, int merceid)
 int getpart()
 {
     int x = -1;
-    int y;
+    int y=-1;
     int i;
     int j;
     int q;
@@ -264,8 +264,9 @@ int getpart()
     {
         for (j = 0; j < (so_merci + so_merci * giorno); j++)
         {
+            if(merci_ric[j].id)
             y = containsOff(ord[i], merci_ric[j].id);
-            if ((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0) && !(merci_ric[j].pre))
+            if ((y > -1) && (sh_mem_2.porti[ord[i]].off[y].num - sh_mem_2.porti[ord[i]].off[y].pre > 0))
             {
                 flag = true;
                 q = merci_ric[j].pre;
@@ -275,8 +276,9 @@ int getpart()
                     q--;
                 }
                 q = merci_ric[j].pre - q;
-                /* printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem_2.porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]); */
+                 printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem_2.porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]); 
                 merci_ric[j].pre = q;
+                y=-1;
             }
         }
 
@@ -328,7 +330,7 @@ int getdest()
                         nmerci++;
                         barchetta.carico_pre += sh_mem_2.porti[ord[i]].ric[j].size;
                     }
-                    /* printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]); */
+                     printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]); 
                 }
                 else
                 {
