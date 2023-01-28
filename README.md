@@ -1,7 +1,6 @@
  # S-A-O_project
 progetto di sistemi operativi
-git clone https://github.com/Gionato65437/S-A-O_project.git
-importante sizeof(struct shared_data)+(sizeof(struct porto)+sizeof(struct merce)*2*MERCI_RIC_OFF*sizeof(pid_t))*SO_PORTI+(sizeof(struct merce))*SO_MERCI+sizeof(pid_t)*SO_NAVI
+Renato Gioana 963518 Nathan Actis 985578
 per ogni nave:
 	while(tempo < max o domande azzerata){
 	1:	cerca porto più vicino con domanda di merce non prenotata e banchina libera.
