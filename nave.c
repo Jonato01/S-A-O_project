@@ -276,8 +276,8 @@ int getpart()
                     q--;
                 }
                 q = merci_ric[j].pre - q;
-                 printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem_2.porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]); 
-                merci_ric[j].pre = q;
+                 /*printf("Nave %d: prenotati %d lotti di merce %d su %d da caricare al porto %d (carico)\n", barchetta.idn, q, sh_mem_2.porti[ord[i]].off[y].id, merci_ric[j].pre, ord[i]); 
+                */merci_ric[j].pre = q;
                 y=-1;
             }
         }
@@ -330,8 +330,8 @@ int getdest()
                         nmerci++;
                         barchetta.carico_pre += sh_mem_2.porti[ord[i]].ric[j].size;
                     }
-                     printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]); 
-                }
+                    /* printf("Nave %d: prenotati %d lotti di merce %d da consegnare al porto %d\n", barchetta.idn, merci_ric[j].pre, merci_ric[j].id, ord[i]); 
+                */}
                 else
                 {
                     merci_ric[j].id = -1;

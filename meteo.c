@@ -79,19 +79,15 @@ void mareggiata()
     int c = 0;
     dmpptr->mareggiata++;
     srand(getpid());
-    porto = rand() % (SO_PORTI) + 1;
-     printf("Mareggiata in porto %d!\n", porto - 1); 
+    porto = rand()%SO_PORTI + 1;
+     /*printf("Mareggiata in porto %d!\n", porto - 1);*/ 
     while (1)
     {
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1)
         {
-            if(errno==ENOMSG)
-            break;
-             /*nessuna nave  da colpire*/
-            else if (errno)
-            {
-                perror("Errore in mareggiata!");
-            }
+            if(errno!=ENOMSG)
+            perror("err in mareggiata");
+            else
             break;
         }
         else
@@ -103,7 +99,7 @@ void mareggiata()
             msgsnd(msgP_id,&msgP,sizeof(msgP),IPC_NOWAIT);
             if (errno != EINTR)
             {
-                perror("Errore in mareggiata!");
+                perror("Errore in mareggiata snd!");
             }
             
         }
@@ -116,7 +112,7 @@ void handle_time(int signal)
 {
     /* printf("METEO: inizia tempesta\n"); */
     tempesta();
-     printf("METEO: inizia mareggiata\n"); 
+    /* printf("METEO: inizia mareggiata\n");*/ 
     mareggiata();
     
 }
