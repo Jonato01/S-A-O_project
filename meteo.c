@@ -52,8 +52,7 @@ void handle_morte(int signal)
 
 void tempesta()
 {
-    do
-    {
+    
         if (msgrcv(msgN_id, &msgN, sizeof(msgN), 0, IPC_NOWAIT) == -1)
         {
             if (errno == ENOMSG)
@@ -71,22 +70,24 @@ void tempesta()
             LOCK dmpptr->navi_temp++; UNLOCK
             kill(msgN.pid, SIGUSR2);
         }
-    } while (errno == EINTR);
+    
 }
 
 void mareggiata()
 {
     int porto;
     int c = 0;
+    dmpptr->mareggiata++;
     srand(getpid());
     porto = rand() % (SO_PORTI) + 1;
-    /* printf("Mareggiata in porto %d!\n", porto - 1); */
+     printf("Mareggiata in porto %d!\n", porto - 1); 
     while (1)
     {
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1)
         {
             if(errno==ENOMSG)
-            dmpptr->mareggiata++; /*nessuna nave colpita*/
+            break;
+             /*nessuna nave  da colpire*/
             else if (errno)
             {
                 perror("Errore in mareggiata!");
@@ -104,7 +105,7 @@ void mareggiata()
             {
                 perror("Errore in mareggiata!");
             }
-            dmpptr->mareggiata++;
+            
         }
     }
     
@@ -117,7 +118,7 @@ void handle_time(int signal)
     tempesta();
      printf("METEO: inizia mareggiata\n"); 
     mareggiata();
-    nanosleep(&rem, &rem);
+    
 }
 
 int main()
@@ -171,7 +172,8 @@ int main()
 
             rem.tv_sec = intpart;
             rem.tv_nsec = fractpart * 1e9;
-            nanosleep(&rem, &rem);
+            do{nanosleep(&rem, &rem);
+            }while(errno==EINTR);
             /*printf("METEO: inizia vortice\n");*/
             LOCK 
             do
