@@ -78,9 +78,9 @@ void mareggiata()
     int porto;
     int c = 0;
     dmpptr->mareggiata++;
-    srand(getpid());
-    porto = rand()%SO_PORTI + 1;
-     /*printf("Mareggiata in porto %d!\n", porto - 1);*/ 
+    
+    /*porto = rand()%SO_PORTI + 1;*/
+     printf("Mareggiata in porto %d!\n", porto - 1);
     while (1)
     {
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1)
