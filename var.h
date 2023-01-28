@@ -282,7 +282,6 @@ void setvar(){
          else 
             printf("trovata variabile inutilizzata");
     }
-    
 }
 
 #endif
