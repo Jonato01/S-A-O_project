@@ -23,6 +23,8 @@ int banchine;
 int portid;
 struct timespec rem;
 struct dump_2 * portsh;
+struct dump_3 * merck;
+int merck_sh;
 struct shared_data sh_mem;
 struct shared_data sh_mem_2;
 struct dump dmp;
@@ -75,6 +77,8 @@ void fine_sim(int signal)
     shmdt(hlp);
     shmctl(mem_id, 0, IPC_RMID);
     shmdt(dmpptr);
+    shmdt(merck);
+    shmctl(merck_sh,0,IPC_RMID);
     shmctl(dmp_id, 0, IPC_RMID);
     shmdt(portsh);
     shmctl(portid, 0, IPC_RMID);
@@ -94,11 +98,6 @@ void fine_sim(int signal)
 void dump(){
     int i;
     int j;
-    int x0 = 0;
-    int x1 = 0;
-    int x2 = 0;
-    int x3 = 0;
-    int x4 = 0;
     int z;
     struct merce **m;
     struct msqid_ds my_q_data;
@@ -120,38 +119,17 @@ void dump(){
 
     printf("\t   al porto\t      su nave\t   consegnate\tscadute in porto  scadute in nave\n");
     for(z = 0; z < SO_MERCI; z++){
-        printf("Merce %d: ", z);
-        for(i = 0; i < SO_PORTI; i++){
-            for(j = 0; j < MERCI_RIC_OFF*giorni; j++){
-                switch(m[i][j].status){
-                    case 0:
-                        x0++;
-                        break;
-                    case 1:
-                        x1++;
-                        break;
-                    case 2:
-                        x2++;
-                        break;
-                    case 3:
-                        x3++;
-                        break;
-                    case 4:
-                        x4++;
-                        break;
-                }
-            }
-        }
-        printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", x0, x1, x2, x3, x4);
+        printf("Merce %d: ", z+1);
+        printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", merck[z].mer_por, merck[z].mer_nav, merck[z].mer_con, merck[z].sca_por, merck[z].sca_nav);
     }
     for(i = 0; i < SO_PORTI; i++){
-        printf("porto %d: merci ric: %d , merci off: %d, merci cons: %d, merci spedite %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe);    
+        printf("porto %d: merci ric: %d , merci off: %d, merci cons: %d, merci spedite %d\n porti colpiti da mareggiata %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe,dmpptr->mareggiata);    
             }
         
 
     printf("Navi in mare con carico a bordo: %d\n",dmpptr->navi_piene);
     printf("Navi in mare senza carico: %d\n",dmpptr->navi_vuote);
-    printf("Navi in porto che caricano/scaricano: %ld",my_q_data.msg_qnum);
+    printf("Navi in porto che caricano/scaricano: %ld\n",my_q_data.msg_qnum);
     printf("Navi colpite da tempesta: %d\n ",dmpptr->navi_temp);
     printf("Navi affondate: %d\n",dmpptr->navi_aff);
 
@@ -259,6 +237,9 @@ void genporti()
             perror("Execve porti er");
             exit(1);
         }
+        msgP.id=i+1;
+        msgP.pid=j;
+        msgsnd(msgP_id,&msgP,sizeof(msgP),IPC_NOWAIT);
         porti[i]=j;
         sops.sem_num = 1;
         sops.sem_op = -1;
@@ -307,6 +288,8 @@ int main(int args, char *argv[])
     mem_mael = shmget(getpid() + 9, sizeof(pid_t) * so_navi, 0600 | IPC_CREAT);
     portid=shmget(getpid()+10,sizeof(struct dump_2)*SO_PORTI, 0600 | IPC_CREAT);
     portsh=shmat(portid,NULL,0600);
+    merck_sh=shmget(getpid()+11,sizeof(struct dump_3)*SO_MERCI,0600| IPC_CREAT);
+    merck=shmat(merck_sh,NULL,0600);
     navi = shmat(mem_mael, NULL, 0600);
     hlp = shmat(mem_id, NULL, 0600);
     sh_mem.merci = (struct merce *)(hlp);

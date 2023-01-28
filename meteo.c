@@ -58,7 +58,7 @@ void tempesta()
         {
             if (errno == ENOMSG)
             {
-                printf("Nessuna nave in viaggio, tempesta evitata\n");
+                /* printf("Nessuna nave in viaggio, tempesta evitata\n"); */
             }
             else if (errno != EINTR)
             {
@@ -67,7 +67,7 @@ void tempesta()
         }
         else
         {
-            printf("Scatenata tempesta su nave %d!\n", (int)msgN.id - 1);
+            /* printf("Scatenata tempesta su nave %d!\n", (int)msgN.id - 1); */
             LOCK dmpptr->navi_temp++; UNLOCK
             kill(msgN.pid, SIGUSR2);
         }
@@ -80,12 +80,12 @@ void mareggiata()
     int c = 0;
     srand(getpid());
     porto = rand() % (SO_PORTI + 1) + 1;
-    printf("Mareggiata in porto %d!\n", porto - 1);
+    /* printf("Mareggiata in porto %d!\n", porto - 1); */
     while (1)
     {
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1)
         {
-            if (errno != ENOMSG && errno != EINTR)
+            if (errno)
             {
                 perror("Errore in mareggiata!");
             }
@@ -93,23 +93,27 @@ void mareggiata()
         }
         else
         {
-            printf("Porto %d in mareggiata!\n", (int)msgP.id - 1);
+            /* printf("Porto %d in mareggiata!\n", (int)msgP.id - 1); */
             kill(msgP.pid, SIGWINCH /* consigliato da chatGPT come SIGUSR3*/);
             c++;
-            LOCK
+            
+            msgsnd(msgP_id,&msgP,sizeof(msgP),IPC_NOWAIT);
+            if (errno != EINTR)
+            {
+                perror("Errore in mareggiata!");
+            }
             dmpptr->mareggiata++;
-            UNLOCK
         }
     }
     
-    printf("METEO: colpite %d navi dalla mareggiata\n", c);
+    /* printf("METEO: colpite %d navi dalla mareggiata\n", c); */
 }
 
 void handle_time(int signal)
 {
-    printf("METEO: inizia tempesta\n");
+    /* printf("METEO: inizia tempesta\n"); */
     tempesta();
-    printf("METEO: inizia mareggiata\n");
+     printf("METEO: inizia mareggiata\n"); 
     mareggiata();
     nanosleep(&rem, &rem);
 }
@@ -132,10 +136,10 @@ int main()
     mem_id = shmget(getppid(), j, 0600);
     sem_id = semget(getppid() + 1, NUM_SEMS, 0600);
     msgN_id = msgget(getppid() + 3, 0600);
-    printf("Meteo: msgN_id: %d\n", msgN_id);
+    /* printf("Meteo: msgN_id: %d\n", msgN_id); */
     msgP_id = msgget(getppid() + 4, 0600);
     
-    printf("Meteo: msgP_id: %d\n", msgP_id);
+    /* printf("Meteo: msgP_id: %d\n", msgP_id); */
     dmp_id = shmget(getppid() + 5, sizeof(struct dump), 0600);
     dmpptr = shmat(dmp_id, NULL, 0600);
     mem_mael = shmget(getppid() + 9, sizeof(pid_t) * SO_NAVI, 0600);
@@ -166,7 +170,7 @@ int main()
             rem.tv_sec = intpart;
             rem.tv_nsec = fractpart * 1e9;
             nanosleep(&rem, &rem);
-            printf("METEO: inizia vortice\n");
+            /*printf("METEO: inizia vortice\n");*/
             LOCK 
             do
             {
@@ -174,17 +178,16 @@ int main()
             }
             while (navi[i] == -1);
             UNLOCK
-            printf("Nave  colpita dal vortice!! pid = %d\n\n", navi[i]);
+            /*printf("Nave  colpita dal vortice!! pid = %d\n\n", navi[i]);*/
             dmpptr->navi_aff++;
             LOCK
                 kill(navi[i], SIGINT);
             navi[i] = -1;
-            TEST_ERROR
             UNLOCK
             navi_vita--;
             if (!navi_vita)
             {
-                printf("Non ci sono più navi!\n");
+                /*printf("Non ci sono più navi!\n");*/
                 flag = false;
                 kill(getppid(),SIGINT);
             }

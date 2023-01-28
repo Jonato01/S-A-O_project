@@ -76,6 +76,14 @@ struct shared_data {
     struct merce * merci;
     struct porto * porti;  
 };
+struct dump_3{
+    int mer_por;
+    int mer_nav;
+    int mer_con;
+    int sca_por;
+    int sca_nav;
+
+};
 struct dump_2 {
     int num_merc;
     int merci_spe;
