@@ -79,8 +79,8 @@ void mareggiata()
     int c = 0;
     dmpptr->mareggiata++;
     
-    /*porto = rand()%SO_PORTI + 1;*/
-     printf("Mareggiata in porto %d!\n", porto - 1);
+    porto = rand()%SO_PORTI + 1;/*
+     printf("Mareggiata in porto %d!\n", porto - 1);*/
     while (1)
     {
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), porto, IPC_NOWAIT) == -1)
@@ -96,11 +96,7 @@ void mareggiata()
             kill(msgP.pid, SIGWINCH /* consigliato da chatGPT come SIGUSR3*/);
             c++;
             
-            msgsnd(msgP_id,&msgP,sizeof(msgP),IPC_NOWAIT);
-            if (errno != EINTR)
-            {
-                perror("Errore in mareggiata snd!");
-            }
+            
             
         }
     }

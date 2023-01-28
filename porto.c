@@ -126,13 +126,13 @@ void genric()
             
             for (j = 0; j < (MERCI_RIC_OFF + MERCI_RIC_OFF * giorno) && off<SO_MERCI; j++)
             {
-                if (r == sh_mem_2.porti[porto_id].off[j].id && !merk[r] && sh_mem_2.porti[porto_id].off[j].vita)
+                if (r == sh_mem_2.porti[porto_id].off[j].id && !merk[r-1] && sh_mem_2.porti[porto_id].off[j].vita)
                     {
-                        merk[r]=1;
+                        merk[r-1]=1;
                         off++;
                     }
             }
-            if (x == i && !merk[r])
+            if (x == i && !merk[r-1])
             {
                 sh_mem_2.porti[porto_id].ric[x].id = r;
                 sh_mem_2.porti[porto_id].ric[x].vita = sh_mem.merci[r - 1].vita;
@@ -179,13 +179,13 @@ void genmerci()
            
             for (j = 0; j < (MERCI_RIC_OFF * giorno) && off<so_merci ; j++)
             {
-                if (r == sh_mem_2.porti[porto_id].ric[j].id && !merk[r] && sh_mem_2.porti[porto_id].ric[j].num)
+                if (r == sh_mem_2.porti[porto_id].ric[j].id && !merk[r-1] && sh_mem_2.porti[porto_id].ric[j].num)
                     {
                         off++;
-                        merk[r]=1;
+                        merk[r-1]=1;
                     }
             }
-            if (x == i && !merk[r])
+            if (x == i && !merk[r-1])
             {
 
                 sh_mem_2.porti[porto_id].off[x].id = r;

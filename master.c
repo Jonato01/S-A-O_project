@@ -123,10 +123,10 @@ void dump(){
         printf("\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", merck[z].mer_por, merck[z].mer_nav, merck[z].mer_con, merck[z].sca_por, merck[z].sca_nav);
     }
     for(i = 0; i < SO_PORTI; i++){
-        printf("porto %d: merci ric: %d , merci off: %d, merci cons: %d, merci spedite %d\n porti colpiti da mareggiata %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe,dmpptr->mareggiata);    
+        printf("porto %d: merci ric: %d , merci off: %d, merci cons: %d, merci spedite %d\n",i,portsh[i].merci_ric,portsh[i].merci_off,portsh[i].merci_cons,portsh[i].merci_spe);    
             }
         
-
+    printf(" porti colpiti da mareggiata %d\n",dmpptr->mareggiata);
     printf("Navi in mare con carico a bordo: %d\n",dmpptr->navi_piene);
     printf("Navi in mare senza carico: %d\n",dmpptr->navi_vuote);
     printf("Navi in porto che caricano/scaricano: %ld\n",my_q_data.msg_qnum);

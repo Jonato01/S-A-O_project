@@ -49,10 +49,7 @@ int *ord; /* ID porti in ordine di distanza*/
 
 void handle_morte(int signal)
 {
-    if(barchetta.carico)
-    dmpptr->navi_piene--;
-    else 
-    dmpptr->navi_vuote--;
+    
     shmdt(portsh);
     free(sh_mem_2.porti);
     free(ord);
@@ -70,9 +67,15 @@ void handle_morte(int signal)
             /* printf("Nave %d: rimossa dalla coda\n", barchetta.idn); */
         
     }
+    if(!msgPf1 && !msgPf2)
+    {if(barchetta.carico)
+        dmpptr->navi_piene--;
+        else 
+        dmpptr->navi_vuote--;}
     if (msgPf1)
     {
         /* printf("La nave %d era al porto\n", barchetta.idn); */
+        
         if (msgrcv(msgP_id, &msgP, sizeof(msgP), barchetta.idp_part + 1, IPC_NOWAIT) == -1)
         {
             if (errno != ENOMSG)
@@ -578,6 +581,7 @@ int main(int argc, char *argv[])
 
                 if (msgrcv(msgN_id, &msgN, sizeof(msgN), barchetta.idn + 1, IPC_NOWAIT) == -1)
                 {
+                    if(errno!=ENOMSG)
                     TEST_ERROR;
                 }
                 
@@ -724,14 +728,11 @@ int main(int argc, char *argv[])
             }
             else
             {
-                /* printf("Nave %d: nessun porto offre le merci richieste dal porto %d\n", barchetta.idn, barchetta.idp_dest); */
-                
-            i=giorno;
-            do{pause();
-            }while(i==giorno);
+              
+            barchetta.carico_pre=0;
             }
         }
-        /* printf("NAVE %d: finito il ciclo\n\n", barchetta.idn); */
+         /*printf("\n\n\n\n\n\nNAVE %d: finito il ciclo\n\n\n\n\n\n\n", barchetta.idn);*/ 
     } while (1);
     return 0;
 }
